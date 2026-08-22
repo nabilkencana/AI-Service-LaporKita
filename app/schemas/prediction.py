@@ -6,6 +6,7 @@ class WeatherContext(BaseModel):
     rainfall_mm: float = Field(default=0.0, ge=0.0, description="Rainfall in millimeters over last period")
     temperature_c: float = Field(default=27.0, description="Ambient temperature in Celsius")
     condition: Optional[str] = Field(default="Berawan", description="Text description of weather (e.g. Hujan Lebat, Cerah)")
+    drainage_issue_ratio: Optional[float] = Field(default=0.2, ge=0.0, le=1.0, description="Ratio of drainage complaints")
 
 
 class PredictRiskRequest(BaseModel):
@@ -24,4 +25,4 @@ class PredictRiskData(BaseModel):
     predicted_stress_level: str = Field(..., description="Urban stress classification: low, medium, high (ERD.md §2.11)")
     factors: Dict[str, float] = Field(default_factory=dict, description="Factor contribution breakdown to the risk score")
     recommendation: str = Field(..., description="Actionable recommendation for DPUPR/Dishub")
-    is_placeholder: bool = Field(default=True, alias="_placeholder", serialization_alias="_placeholder", description="Indicates placeholder/mock implementation for Phase 1")
+    is_placeholder: bool = Field(default=False, alias="_placeholder", serialization_alias="_placeholder", description="Indicates whether response is placeholder (False for real trained XGBoost model)")

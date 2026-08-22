@@ -8,9 +8,9 @@ Service ini dipanggil secara internal oleh Backend Gateway NestJS (`Architecture
 
 ## ⚠️ Limitasi Eksplisit & Catatan Demo
 
-1. **Dataset Publik (Bukan Foto Asli Malang):** Seluruh model klasifikasi gambar dilatih dan dievaluasi menggunakan **dataset publik**. Belum ada sesi validasi dengan foto lapangan kondisi nyata Kota Malang pada demo ini. Metrik akurasi yang dilaporkan hanya berlaku untuk test set dataset publik.
-2. **Data Historis Sintetis:** Data historis cuaca, traffic, dan densitas laporan untuk model XGBoost menggunakan **data sintetis** yang ditandai secara eksplisit.
-3. **Response Placeholder (Fase 1):** Pada Fase 1, endpoint mengembalikan response dummy yang 100% valid sesuai skema Pydantic dan ditandai dengan field `"_placeholder": true`.
+1. **Dataset Publik (Bukan Foto Asli Malang):** Seluruh model klasifikasi gambar YOLOv11 dilatih dan dievaluasi menggunakan **dataset publik** (5 kelas fasilitas). Belum ada sesi validasi dengan foto lapangan kondisi nyata Kota Malang pada demo ini. Metrik akurasi yang dilaporkan (99.49%) berlaku untuk test set dataset publik.
+2. **Data Historis Sintetis (XGBoost):** Data historis cuaca, traffic, dan densitas laporan untuk model XGBoost menggunakan **dataset sintetis terkalibrasi hidrologi perkotaan** (`scripts/generate_synthetic_zone_data.py`).
+3. **Kebutuhan Retraining Produksi:** Sebelum implementasi operasional nyata di Kota Malang, model XGBoost **WAJIB di-retrain** menggunakan data observasi historis resmi (stasiun cuaca BMKG Karangploso/Malang dan riwayat laporan penanganan fisik DPUPR Kota Malang).
 
 ---
 
@@ -31,7 +31,7 @@ pip install -r requirements.txt
 # 3. Setup environment variables
 cp .env.example .env
 
-# 4. Jalankan unit test
+# 4. Jalankan unit test (16 test cases)
 pytest -v
 
 # 5. Jalankan server FastAPI
@@ -42,7 +42,26 @@ Dokumentasi OpenAPI/Swagger UI otomatis tersedia di: `http://localhost:8000/docs
 
 ---
 
-### 2. Menjalankan dengan Docker
+### 2. Pipeline Training Model ML
+
+#### A. Training Model Klasifikasi YOLOv11-cls (Fase 3)
+```bash
+python scripts/train_yolo_classifier.py
+```
+- **Bobot model:** `models/yolov11-cls-laporkita.pt`
+- **Laporan evaluasi:** [`training_report.md`](file:///Users/nabilkencana/Project%20/Lomba%20MAGEITS/ai-service/training_report.md)
+
+#### B. Training Model Prediksi Risiko XGBoost (Fase 4)
+```bash
+python scripts/train_xgboost_model.py
+```
+- **Dataset sintetis:** `dataset_staging/synthetic_zone_metrics.csv` (6.000 sampel)
+- **Bobot model:** `models/xgboost-flood-risk.json`
+- **Metrik evaluasi:** $R^2 = 0.9635$, $\text{RMSE} = 0.0490$, $\text{MAE} = 0.0369$
+
+---
+
+### 3. Menjalankan dengan Docker
 
 ```bash
 # Build image
@@ -87,31 +106,26 @@ Jika terjadi kesalahan (error/validasi):
 | Method | Endpoint | Deskripsi | Status Implementasi |
 |---|---|---|---|
 | `GET` | `/health` | Health check & versi service | ✅ Selesai |
-| `POST` | `/v1/verify` | AI Verification klasifikasi gambar (5 kelas) & Smart Priority | 🟡 Kontrak Aktif (Mock) |
-| `POST` | `/v1/predict-risk` | Prediksi probabilitas risiko genangan/infrastruktur (XGBoost) | 🟡 Kontrak Aktif (Mock) |
-| `POST` | `/v1/policy-simulate` | Simulasi kebijakan perkotaan & proyeksi dampak (Gemini) | 🟡 Kontrak Aktif (Mock) |
+| `POST` | `/v1/verify` | AI Verification klasifikasi gambar (YOLOv11-cls), validasi GPS/timestamp, dan Smart Priority | ✅ **Model Aktif (YOLOv11-cls)** |
+| `POST` | `/v1/predict-risk` | Prediksi probabilitas risiko genangan & infrastruktur (XGBoost) | ✅ **Model Aktif (XGBoost)** |
+| `POST` | `/v1/policy-simulate` | Simulasi kebijakan perkotaan & proyeksi dampak (Gemini) | 🟡 Kontrak Aktif (Fase 5) |
 
 ---
 
-## ⚙️ Variabel Konfigurasi (`.env`)
+## 📊 Struktur Data Sintetis XGBoost (ERD.md §2.12)
 
-| Variabel | Tipe | Default | Deskripsi |
+Dataset sintetis (`dataset_staging/synthetic_zone_metrics.csv`) dibuat dengan formula hidrologi perkotaan logistik:
+
+| Fitur | Tipe | Rentang Nilai | Deskripsi & Rasional Domain |
 |---|---|---|---|
-| `APP_NAME` | string | `LaporKita AI Service` | Nama aplikasi |
-| `APP_ENV` | string | `development` | Environment (`development` / `production`) |
-| `PORT` | int | `8000` | Port listen server |
-| `LOG_LEVEL` | string | `INFO` | Level log (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `AI_CONFIDENCE_THRESHOLD` | float | `0.6` | Threshold keyakinan minimum verifikasi otomatis (`Rules.md §1.2`) |
-| `MALANG_BBOX_MIN_LAT` | float | `-8.0500` | Batas selatan Bounding Box Kota Malang |
-| `MALANG_BBOX_MAX_LAT` | float | `-7.9000` | Batas utara Bounding Box Kota Malang |
-| `MALANG_BBOX_MIN_LON` | float | `112.5500` | Batas barat Bounding Box Kota Malang |
-| `MALANG_BBOX_MAX_LON` | float | `112.7000` | Batas timur Bounding Box Kota Malang |
-| `WEIGHT_DAMAGE_SEVERITY` | float | `0.35` | Bobot keparahan kerusakan pada Smart Priority (`Rules.md §1.3`) |
-| `WEIGHT_SUPPORT_COUNT` | float | `0.25` | Bobot dukungan/upvote warga pada Smart Priority |
-| `WEIGHT_LOCATION_DENSITY` | float | `0.20` | Bobot densitas laporan sekitar pada Smart Priority |
-| `WEIGHT_CATEGORY_URGENCY` | float | `0.20` | Bobot urgensi kategori pada Smart Priority |
-| `GEMINI_API_KEY` | string | `""` | API key Google Gemini untuk Policy Simulator |
-| `GEMINI_MODEL_NAME` | string | `gemini-2.5-flash` | Model Gemini yang digunakan |
+| `rainfall_mm` | float | 0.0 – 140.0 mm | Curah hujan harian (simulasi BMKG musim hujan vs kemarau) |
+| `temperature_c` | float | 18.0 – 35.0 °C | Suhu udara ambien (°C) |
+| `report_density` | int | 0 – 60 | Jumlah laporan aktif di zona wilayah |
+| `traffic_density` | float | 0.05 – 0.98 | Tingkat kemacetan lalu lintas (0.0=lancar, 1.0=macet total) |
+| `drainage_issue_ratio`| float | 0.0 – 1.0 | Rasio laporan yang berkaitan dengan saluran drainase tersumbat |
+| `monsoon_season` | int | 0 / 1 | Indikator musim penghujan di Jawa Timur/Malang |
+| **`flood_risk_probability`** | float | 0.01 – 0.99 | **Target Prediksi:** Probabilitas genangan/kerusakan infrastruktur |
+| **`risk_level`** | string | low, medium, high | Kategori risiko: `low` (<0.40), `medium` (0.40–0.70), `high` (≥0.70) |
 
 ---
 
@@ -123,9 +137,10 @@ Jalankan test suite menggunakan pytest:
 pytest -v
 ```
 
-Hasil test mencakup:
+Hasil test (16 test cases) mencakup:
 - Validasi status kesehatan (`GET /health`)
-- Uji skema input & output valid untuk 3 endpoint AI
-- Uji validasi koordinat GPS dalam dan luar Kota Malang
-- Uji perhitungan rumus Smart Priority scoring
+- Uji inferensi YOLOv11 pada seluruh 5 kelas fasilitas umum
+- Uji aturan verifikasi otomatis (threshold $\ge 0.6$ vs $< 0.6$, anomali GPS di luar Malang, dan anomali timestamp)
+- Uji inferensi XGBoost (sanity check: curah hujan tinggi & densitas tinggi menghasilkan probabilitas risiko lebih tinggi dibanding input rendah)
+- Uji rumus Smart Priority urgency scoring
 - Uji serialisasi format error envelope untuk input invalid (422)

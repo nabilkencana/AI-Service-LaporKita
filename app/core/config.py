@@ -56,7 +56,7 @@ class Settings(BaseSettings):
 
     # Model file paths (Phases 3-5)
     CLASSIFICATION_MODEL_PATH: str = "models/yolov11-cls-laporkita.pt"
-    XGBOOST_MODEL_PATH: str = "models/xgboost_risk_model.json"
+    XGBOOST_MODEL_PATH: str = "models/xgboost-flood-risk.json"
 
     model_config = SettingsConfigDict(
         env_file=".env",

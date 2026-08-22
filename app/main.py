@@ -24,6 +24,12 @@ async def lifespan(app: FastAPI):
         YOLOClassificationService.get_instance()
     except Exception as e:
         logger.warning(f"Could not preload YOLO model on startup: {e}")
+
+    try:
+        from app.services.xgboost_service import XGBoostRiskService
+        XGBoostRiskService.get_instance()
+    except Exception as e:
+        logger.warning(f"Could not preload XGBoost model on startup: {e}")
     yield
     # Shutdown
     logger.info(f"Shutting down {settings.APP_NAME}")
