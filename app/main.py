@@ -10,7 +10,9 @@ from app.core.config import settings
 from app.core.logging import setup_logging, logger
 from app.schemas.base import APIResponse, APIError, HealthStatusData
 from app.routers.verification import router as verification_router
+from app.routers.verification import verify_compat_router
 from app.routers.prediction import router as prediction_router
+from app.routers.prediction import zone_metrics_router
 from app.routers.policy_simulator import router as policy_simulator_router
 
 
@@ -169,4 +171,14 @@ async def health_check():
 # Include Routers under /v1 prefix
 app.include_router(verification_router, prefix=settings.API_V1_STR)
 app.include_router(prediction_router, prefix=settings.API_V1_STR)
+app.include_router(zone_metrics_router, prefix=settings.API_V1_STR)
 app.include_router(policy_simulator_router, prefix=settings.API_V1_STR)
+
+# /api/v1 mount: flat NestJS-compat handlers registered FIRST so they win over the
+# canonical envelope handlers for the shared paths (e.g. /api/v1/verify).
+app.include_router(verify_compat_router, prefix="/api/v1")
+app.include_router(verification_router, prefix="/api/v1")
+app.include_router(prediction_router, prefix="/api/v1")
+app.include_router(zone_metrics_router, prefix="/api/v1")
+app.include_router(policy_simulator_router, prefix="/api/v1")
+

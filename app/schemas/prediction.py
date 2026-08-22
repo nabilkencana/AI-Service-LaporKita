@@ -26,3 +26,27 @@ class PredictRiskData(BaseModel):
     factors: Dict[str, float] = Field(default_factory=dict, description="Factor contribution breakdown to the risk score")
     recommendation: str = Field(..., description="Actionable recommendation for DPUPR/Dishub")
     is_placeholder: bool = Field(default=False, alias="_placeholder", serialization_alias="_placeholder", description="Indicates whether response is placeholder (False for real trained XGBoost model)")
+
+
+class PredictZoneMetricsRequest(BaseModel):
+    zone_id: Optional[str] = Field(default=None, description="UUID of urban zone")
+    zone_name: Optional[str] = Field(default=None, description="Zone display name")
+    active_reports: int = Field(default=0, ge=0, description="Active report count in the zone")
+
+
+class WeatherContextSnapshot(BaseModel):
+    source: str = Field(default="BMKG Kota Malang (Simulasi)", description="Weather data source")
+    temperature_celsius: float = Field(default=24.5, description="Ambient temperature in Celsius")
+    humidity_percentage: float = Field(default=82.0, description="Relative humidity percentage")
+    rainfall_mm: float = Field(default=0.0, ge=0.0, description="Rainfall in millimeters")
+    condition: str = Field(default="Berawan", description="Text description of weather")
+
+
+class PredictZoneMetricsData(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
+
+    report_density: int = Field(..., description="Aggregated report count in the zone")
+    traffic_density: float = Field(..., ge=0.0, le=1.0, description="Normalized traffic congestion level (0.0 to 1.0)")
+    flood_risk_probability: float = Field(..., ge=0.0, le=1.0, description="Calculated probability of flood/risk (0.0 to 1.0)")
+    weather_context: WeatherContextSnapshot = Field(..., description="Weather context snapshot")
+    stress_level: str = Field(..., description="Urban stress classification: low, medium, high")

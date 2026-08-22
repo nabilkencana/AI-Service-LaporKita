@@ -1,10 +1,17 @@
 from fastapi import APIRouter, status
 from app.schemas.base import APIResponse
-from app.schemas.prediction import PredictRiskRequest, PredictRiskData
+from app.schemas.prediction import (
+    PredictRiskRequest,
+    PredictRiskData,
+    PredictZoneMetricsRequest,
+    PredictZoneMetricsData,
+    WeatherContextSnapshot,
+)
 from app.core.logging import logger
 from app.services.xgboost_service import XGBoostRiskService
 
 router = APIRouter(prefix="/predict-risk", tags=["Risk Prediction"])
+zone_metrics_router = APIRouter(prefix="/predict", tags=["Risk Prediction (Zone Metrics)"])
 
 
 @router.post(
@@ -48,4 +55,51 @@ async def predict_risk(payload: PredictRiskRequest):
         success=True,
         data=data,
         error=None,
+    )
+
+
+@zone_metrics_router.post(
+    "/zone-metrics",
+    response_model=PredictZoneMetricsData,
+    status_code=status.HTTP_200_OK,
+    summary="Predict per-zone metrics (compatibility endpoint for NestJS backend-laporkita)",
+)
+async def predict_zone_metrics(payload: PredictZoneMetricsRequest):
+    """
+    Compatibility endpoint for the NestJS backend (backend-laporkita).
+
+    Mirrors the contract expected by prediction.service.js:
+      request : {zone_id, zone_name, active_reports}
+      response: flat {report_density, traffic_density, flood_risk_probability,
+                      weather_context, stress_level}
+
+    Uses the same trained XGBoost model as /predict-risk.
+    """
+    active = payload.active_reports
+    rainfall_mm = min(100.0, max(5.0, active * 4.5 + 10.0))
+    traffic_density = min(0.95, 0.3 + active * 0.05)
+
+    xgb_service = XGBoostRiskService.get_instance()
+    flood_prob, risk_level, stress_level, _factors, _recommendation = xgb_service.predict_risk(
+        report_density=active,
+        rainfall_mm=rainfall_mm,
+        traffic_density=traffic_density,
+    )
+
+    condition = "Hujan Deras" if rainfall_mm > 40 else "Hujan Ringan / Berawan"
+
+    logger.info(
+        f"Received zone-metrics request for zone_id='{payload.zone_id}', "
+        f"active_reports={active} -> flood_prob={flood_prob:.4f}, stress={stress_level}"
+    )
+
+    return PredictZoneMetricsData(
+        report_density=active,
+        traffic_density=round(traffic_density, 2),
+        flood_risk_probability=flood_prob,
+        weather_context=WeatherContextSnapshot(
+            rainfall_mm=rainfall_mm,
+            condition=condition,
+        ),
+        stress_level=stress_level,
     )
