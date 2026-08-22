@@ -123,6 +123,7 @@ async def test_verify_report_all_5_classes_inference(client: AsyncClient):
             "claimed_category": cls,
             "latitude": -7.9826,
             "longitude": 112.6308,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         response = await client.post("/v1/verify", json=payload)
         assert response.status_code == 200
@@ -154,3 +155,24 @@ async def test_verify_report_missing_image_validation_error(client: AsyncClient)
     data = response.json()
     assert data["success"] is False
     assert data["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_verify_report_corrupted_base64_returns_structured_error(client: AsyncClient):
+    """
+    Scenario 6: Request with corrupted/unreadable base64 string
+    Expected: Handled HTTP 422 error with code INVALID_IMAGE in standard envelope
+    """
+    payload = {
+        "image_base64": "NOT_A_VALID_BASE64_IMAGE_DATA_STRING_12345",
+        "claimed_category": "Jalan Berlubang",
+        "latitude": -7.9826,
+        "longitude": 112.6308,
+    }
+    response = await client.post("/v1/verify", json=payload)
+    assert response.status_code == 422
+
+    data = response.json()
+    assert data["success"] is False
+    assert data["error"]["code"] == "INVALID_IMAGE"
+    assert "tidak dapat dimuat" in data["error"]["message"]

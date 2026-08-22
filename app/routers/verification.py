@@ -56,10 +56,25 @@ async def verify_report(payload: VerifyReportRequest):
 
     # 3. Execute Real YOLOv11-cls inference
     yolo_svc = YOLOClassificationService.get_instance()
-    predicted_category, ai_confidence_score, class_probs, damage_severity = yolo_svc.predict(
-        image_url=payload.image_url,
-        image_base64=payload.image_base64,
-    )
+    try:
+        predicted_category, ai_confidence_score, class_probs, damage_severity = yolo_svc.predict(
+            image_url=payload.image_url,
+            image_base64=payload.image_base64,
+        )
+    except ValueError as ve:
+        from fastapi.responses import JSONResponse
+        from app.schemas.base import APIError
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content=APIResponse[VerifyReportData](
+                success=False,
+                data=None,
+                error=APIError(
+                    code="INVALID_IMAGE",
+                    message=str(ve),
+                ),
+            ).model_dump(by_alias=True),
+        )
 
     # 4. Verification Decision Rules (Rules.md §1.2):
     # - ai_confidence_score >= 0.6 -> lolos otomatis, KECUALI jika ada anomali GPS/timestamp

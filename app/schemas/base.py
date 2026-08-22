@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Optional, Any
+from typing import Generic, TypeVar, Optional, Any, Dict
 from pydantic import BaseModel, Field
 
 T = TypeVar("T")
@@ -17,8 +17,15 @@ class APIResponse(BaseModel, Generic[T]):
     error: Optional[APIError] = Field(default=None, description="Error payload returned on failure")
 
 
+class ModelsStatus(BaseModel):
+    yolo_classification_loaded: bool = Field(..., description="Whether YOLOv11-cls model weights are loaded in memory")
+    xgboost_risk_loaded: bool = Field(..., description="Whether XGBoost risk model weights are loaded in memory")
+    gemini_configured: bool = Field(..., description="Whether Gemini LLM client is properly configured with API key")
+
+
 class HealthStatusData(BaseModel):
     status: str = Field(default="ok", description="Service health state")
     service: str = Field(default="ai-service", description="Service identifier")
     version: str = Field(default="1.0.0", description="Service version")
     environment: str = Field(default="development", description="Environment deployment stage")
+    models: Optional[ModelsStatus] = Field(default=None, description="Operational readiness of ML models")

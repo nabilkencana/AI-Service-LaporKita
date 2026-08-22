@@ -125,17 +125,42 @@ async def generic_exception_handler(request: Request, exc: Exception):
     "/health",
     response_model=APIResponse[HealthStatusData],
     tags=["Health"],
-    summary="Health check endpoint"
+    summary="Health check endpoint with ML models readiness verification"
 )
 async def health_check():
-    """Returns service health status and active version."""
+    """
+    Returns service health status, environment, and operational readiness
+    of ML models (YOLOv11-cls, XGBoost, and Gemini LLM).
+    """
+    from app.schemas.base import ModelsStatus
+    from app.services.yolo_service import YOLOClassificationService
+    from app.services.xgboost_service import XGBoostRiskService
+    from app.services.gemini_service import GeminiPolicyService
+
+    yolo_svc = YOLOClassificationService.get_instance()
+    xgb_svc = XGBoostRiskService.get_instance()
+    gemini_svc = GeminiPolicyService.get_instance()
+
+    yolo_ready = yolo_svc.model is not None
+    xgb_ready = xgb_svc.model is not None
+    gemini_ready = gemini_svc.client is not None
+
+    all_models_ready = yolo_ready and xgb_ready
+
+    models_info = ModelsStatus(
+        yolo_classification_loaded=yolo_ready,
+        xgboost_risk_loaded=xgb_ready,
+        gemini_configured=gemini_ready,
+    )
+
     return APIResponse(
         success=True,
         data=HealthStatusData(
-            status="ok",
+            status="ok" if all_models_ready else "degraded",
             service="ai-service",
             version=settings.VERSION,
             environment=settings.APP_ENV,
+            models=models_info,
         ),
         error=None,
     )
