@@ -1,0 +1,32 @@
+services:
+  ai-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laporkita-ai-service:1.0.0
+    container_name: laporkita-ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=LaporKita AI Service
+      - APP_ENV=development
+      - PORT=8000
+      - HOST=0.0.0.0
+      - LOG_LEVEL=INFO
+      - AI_CONFIDENCE_THRESHOLD=0.6
+      - MALANG_BBOX_MIN_LAT=-8.0500
+      - MALANG_BBOX_MAX_LAT=-7.9000
+      - MALANG_BBOX_MIN_LON=112.5500
+      - MALANG_BBOX_MAX_LON=112.7000
+      - WEIGHT_DAMAGE_SEVERITY=0.35
+      - WEIGHT_SUPPORT_COUNT=0.25
+      - WEIGHT_LOCATION_DENSITY=0.20
+      - WEIGHT_CATEGORY_URGENCY=0.20
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL_NAME=gemini-2.5-flash
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
