@@ -12,3 +12,4 @@ torchvision>=0.15.0
 ultralytics>=8.3.0
 scikit-learn>=1.4.0
 xgboost>=2.0.0
+google-genai>=1.0.0
