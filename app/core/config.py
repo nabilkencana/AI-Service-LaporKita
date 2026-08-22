@@ -54,8 +54,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL_NAME: str = "gemini-2.5-flash"
 
-    # Model file paths (for Phase 3-5)
-    CLASSIFICATION_MODEL_PATH: str = "models/yolo11_cls_best.pt"
+    # Model file paths (Phases 3-5)
+    CLASSIFICATION_MODEL_PATH: str = "models/yolov11-cls-laporkita.pt"
     XGBOOST_MODEL_PATH: str = "models/xgboost_risk_model.json"
 
     model_config = SettingsConfigDict(

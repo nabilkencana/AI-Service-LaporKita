@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
@@ -32,4 +32,5 @@ class VerifyReportData(BaseModel):
     description_auto: str = Field(..., description="Auto-generated descriptive text for the report")
     gps_valid: bool = Field(..., description="Whether GPS coordinates are inside Malang City bounds")
     timestamp_valid: bool = Field(..., description="Whether report timestamp is recent and valid")
-    is_placeholder: bool = Field(default=True, alias="_placeholder", serialization_alias="_placeholder", description="Indicates placeholder/mock implementation for Phase 1")
+    class_probabilities: Optional[Dict[str, float]] = Field(default_factory=dict, description="Softmax confidence distribution across all 5 classes")
+    is_placeholder: bool = Field(default=False, alias="_placeholder", serialization_alias="_placeholder", description="Indicates whether response is placeholder (False for real YOLOv11 model)")

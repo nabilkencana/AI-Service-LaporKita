@@ -19,6 +19,11 @@ async def lifespan(app: FastAPI):
     # Startup
     setup_logging()
     logger.info(f"Starting {settings.APP_NAME} v{settings.VERSION} [{settings.APP_ENV}]")
+    try:
+        from app.services.yolo_service import YOLOClassificationService
+        YOLOClassificationService.get_instance()
+    except Exception as e:
+        logger.warning(f"Could not preload YOLO model on startup: {e}")
     yield
     # Shutdown
     logger.info(f"Shutting down {settings.APP_NAME}")

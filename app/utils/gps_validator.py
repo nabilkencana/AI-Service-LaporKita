@@ -1,4 +1,5 @@
-from typing import Tuple
+from datetime import datetime, timezone, timedelta
+from typing import Tuple, Optional
 from app.core.config import settings
 
 
@@ -27,3 +28,34 @@ def validate_report_coordinates(latitude: float, longitude: float) -> Tuple[bool
         return False, "Lokasi berada di luar wilayah pilot Kota Malang"
 
     return True, "Lokasi valid di Kota Malang"
+
+
+def validate_report_timestamp(
+    report_time: Optional[datetime],
+    max_age_days: int = 30,
+    max_future_minutes: int = 5,
+) -> Tuple[bool, str]:
+    """
+    Validate report capture timestamp per Rules.md §1.2:
+    - Must not be in the future (with 5-minute clock drift tolerance).
+    - Must not be excessively old (default max 30 days).
+    """
+    if report_time is None:
+        return True, "Timestamp tidak disertakan (diasumsikan waktu saat ini)"
+
+    now = datetime.now(timezone.utc)
+    if report_time.tzinfo is None:
+        # If naive datetime, assume UTC or local converted
+        dt_target = report_time.replace(tzinfo=timezone.utc)
+    else:
+        dt_target = report_time
+
+    future_limit = now + timedelta(minutes=max_future_minutes)
+    if dt_target > future_limit:
+        return False, "Timestamp foto berada di masa depan (anomali metadata)"
+
+    past_limit = now - timedelta(days=max_age_days)
+    if dt_target < past_limit:
+        return False, f"Timestamp foto terlalu lampau (> {max_age_days} hari)"
+
+    return True, "Timestamp foto valid"
