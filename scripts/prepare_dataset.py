@@ -13,6 +13,7 @@ import shutil
 from pathlib import Path
 from typing import Dict, List, Tuple
 import requests
+import pandas as pd
 from PIL import Image
 from tqdm import tqdm
 
@@ -21,7 +22,6 @@ RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-STAGING_DIR = BASE_DIR / "dataset_staging"
 OUTPUT_DIR = BASE_DIR / "dataset"
 
 # 5 Target Classes
@@ -36,69 +36,65 @@ CLASSES = [
 DATASET_CONFIGS = {
     "Jalan Berlubang": [
         {
-            "name": "keremberke/pothole-segmentation (train)",
-            "url": "https://huggingface.co/datasets/keremberke/pothole-segmentation/resolve/main/data/train.zip",
-            "type": "zip",
+            "name": "keremberke/pothole-segmentation (train/val/test)",
+            "urls": [
+                "https://huggingface.co/datasets/keremberke/pothole-segmentation/resolve/main/data/train.zip",
+                "https://huggingface.co/datasets/keremberke/pothole-segmentation/resolve/main/data/valid.zip",
+                "https://huggingface.co/datasets/keremberke/pothole-segmentation/resolve/main/data/test.zip",
+            ],
+            "type": "zip_list",
             "license": "CC BY 4.0",
         },
         {
-            "name": "keremberke/pothole-segmentation (valid)",
-            "url": "https://huggingface.co/datasets/keremberke/pothole-segmentation/resolve/main/data/valid.zip",
-            "type": "zip",
-            "license": "CC BY 4.0",
-        },
-        {
-            "name": "keremberke/pothole-segmentation (test)",
-            "url": "https://huggingface.co/datasets/keremberke/pothole-segmentation/resolve/main/data/test.zip",
-            "type": "zip",
-            "license": "CC BY 4.0",
-        },
+            "name": "Andyrasika/potholes-dataset (parquet train/val/test)",
+            "type": "hf_parquet_potholes",
+            "repo": "Andyrasika/potholes-dataset",
+            "license": "MIT",
+        }
     ],
     "Trotoar": [
         {
-            "name": "mohammadnajeeb/concrete_crack_images (train Positive)",
-            "url": "https://huggingface.co/datasets/mohammadnajeeb/concrete_crack_images/resolve/main/data/train.zip",
+            "name": "mohammadnajeeb/concrete_crack_images (METU CCIC Positive)",
+            "urls": [
+                "https://huggingface.co/datasets/mohammadnajeeb/concrete_crack_images/resolve/main/data/train.zip",
+            ],
             "type": "zip_filter",
             "filter_dir": "Positive",
-            "max_samples": 800,
+            "max_samples": 600,
             "license": "CC BY 4.0",
         },
     ],
     "Rambu Lalu Lintas": [
         {
-            "name": "keremberke/german-traffic-sign-detection (train)",
-            "url": "https://huggingface.co/datasets/keremberke/german-traffic-sign-detection/resolve/main/data/train.zip",
-            "type": "zip",
-            "license": "CC BY 4.0",
-        },
-        {
-            "name": "keremberke/german-traffic-sign-detection (valid)",
-            "url": "https://huggingface.co/datasets/keremberke/german-traffic-sign-detection/resolve/main/data/valid.zip",
-            "type": "zip",
+            "name": "keremberke/german-traffic-sign-detection (train/valid)",
+            "urls": [
+                "https://huggingface.co/datasets/keremberke/german-traffic-sign-detection/resolve/main/data/train.zip",
+                "https://huggingface.co/datasets/keremberke/german-traffic-sign-detection/resolve/main/data/valid.zip",
+            ],
+            "type": "zip_list",
+            "max_samples": 550,
             "license": "CC BY 4.0",
         },
     ],
     "Lampu Jalan": [
         {
-            "name": "Team16Project/Street-Light-Dataset",
+            "name": "Team16Project/Street-Light-Dataset (GitHub)",
             "type": "github_tree",
             "repo": "Team16Project/Street-Light-Dataset",
             "path": "Resized Dataset",
+            "max_samples": 450,
             "license": "MIT",
         }
     ],
     "Drainase": [
         {
-            "name": "delima87/manhole_covers_dataset (train)",
-            "url": "https://huggingface.co/datasets/delima87/manhole_covers_dataset/resolve/main/manhole_covers_dataset/train.zip",
-            "type": "zip",
-            "max_samples": 600,
-            "license": "CC BY 4.0",
-        },
-        {
-            "name": "delima87/manhole_covers_dataset (valid)",
-            "url": "https://huggingface.co/datasets/delima87/manhole_covers_dataset/resolve/main/manhole_covers_dataset/valid.zip",
-            "type": "zip",
+            "name": "delima87/manhole_covers_dataset (train/valid)",
+            "urls": [
+                "https://huggingface.co/datasets/delima87/manhole_covers_dataset/resolve/main/manhole_covers_dataset/train.zip",
+                "https://huggingface.co/datasets/delima87/manhole_covers_dataset/resolve/main/manhole_covers_dataset/valid.zip",
+            ],
+            "type": "zip_list",
+            "max_samples": 550,
             "license": "CC BY 4.0",
         },
     ],
@@ -127,35 +123,70 @@ def validate_and_load_image(img_bytes: bytes) -> Image.Image:
         return None
 
 
-def download_zip_source(url: str, filter_subfolder: str = None, max_samples: int = None) -> List[Tuple[str, bytes]]:
-    """Download zip archive and extract valid image bytes."""
-    print(f"  Downloading from {url}...")
-    headers = {"User-Agent": "LaporKita-ML-Pipeline/1.0"}
-    r = requests.get(url, headers=headers, stream=True)
-    if r.status_code != 200:
-        print(f"  [ERROR] Failed to download {url}, status={r.status_code}")
-        return []
-
+def download_zip_urls(urls: List[str], filter_subfolder: str = None, max_samples: int = None) -> List[Tuple[str, bytes]]:
+    """Download one or more zip archives and extract valid image bytes."""
     collected = []
-    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
-        namelist = z.namelist()
-        valid_names = [n for n in namelist if n.lower().endswith((".jpg", ".jpeg", ".png"))]
-        if filter_subfolder:
-            valid_names = [n for n in valid_names if filter_subfolder.lower() in n.lower()]
+    headers = {"User-Agent": "LaporKita-ML-Pipeline/1.0"}
 
-        if max_samples and len(valid_names) > max_samples:
-            random.shuffle(valid_names)
-            valid_names = valid_names[:max_samples]
+    for url in urls:
+        print(f"  Downloading zip from {url}...")
+        r = requests.get(url, headers=headers, stream=True)
+        if r.status_code != 200:
+            print(f"  [ERROR] Failed to download {url}, status={r.status_code}")
+            continue
 
-        for name in valid_names:
-            img_bytes = z.read(name)
-            collected.append((Path(name).name, img_bytes))
+        with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+            namelist = z.namelist()
+            valid_names = [n for n in namelist if n.lower().endswith((".jpg", ".jpeg", ".png"))]
+            if filter_subfolder:
+                valid_names = [n for n in valid_names if filter_subfolder.lower() in n.lower()]
+
+            for name in valid_names:
+                img_bytes = z.read(name)
+                collected.append((Path(name).name, img_bytes))
+
+    if max_samples and len(collected) > max_samples:
+        random.shuffle(collected)
+        collected = collected[:max_samples]
 
     print(f"  Extracted {len(collected)} image files.")
     return collected
 
 
-def download_github_tree_images(repo: str, subfolder: str, max_samples: int = 400) -> List[Tuple[str, bytes]]:
+def download_hf_parquet_potholes(repo: str, max_samples: int = 500) -> List[Tuple[str, bytes]]:
+    """Download images stored inside HuggingFace parquet files."""
+    collected = []
+    headers = {"User-Agent": "LaporKita-ML-Pipeline/1.0"}
+    tree_url = f"https://huggingface.co/api/datasets/{repo}/tree/main/data"
+    r = requests.get(tree_url, headers=headers)
+    if r.status_code != 200:
+        print(f"  [ERROR] Failed to read HF repo tree: {r.status_code}")
+        return []
+
+    files = [f["path"] for f in r.json() if f["path"].endswith(".parquet")]
+    for fpath in files:
+        url = f"https://huggingface.co/datasets/{repo}/resolve/main/{fpath}"
+        print(f"  Downloading parquet from {url}...")
+        p_res = requests.get(url, headers=headers)
+        if p_res.status_code == 200:
+            df = pd.read_parquet(io.BytesIO(p_res.content))
+            for idx, row in df.iterrows():
+                img_data = row.get("image")
+                if isinstance(img_data, dict) and "bytes" in img_data:
+                    b = img_data["bytes"]
+                    collected.append((f"parquet_{Path(fpath).stem}_{idx}.jpg", b))
+                elif isinstance(img_data, bytes):
+                    collected.append((f"parquet_{Path(fpath).stem}_{idx}.jpg", img_data))
+
+    if max_samples and len(collected) > max_samples:
+        random.shuffle(collected)
+        collected = collected[:max_samples]
+
+    print(f"  Extracted {len(collected)} image files from parquet.")
+    return collected
+
+
+def download_github_tree_images(repo: str, subfolder: str, max_samples: int = 450) -> List[Tuple[str, bytes]]:
     """Download images recursively from a GitHub repository directory."""
     print(f"  Querying GitHub API for repo: {repo}/{subfolder}...")
     api_url = f"https://api.github.com/repos/{repo}/contents/{subfolder.replace(' ', '%20')}"
@@ -224,17 +255,22 @@ def process_and_split_dataset():
         for cfg in configs:
             print(f"- Source: {cfg['name']}")
             raw_list = []
-            if cfg["type"] in ["zip", "zip_filter"]:
-                raw_list = download_zip_source(
-                    url=cfg["url"],
+            if cfg["type"] in ["zip_list", "zip_filter"]:
+                raw_list = download_zip_urls(
+                    urls=cfg.get("urls", [cfg.get("url")]),
                     filter_subfolder=cfg.get("filter_dir"),
                     max_samples=cfg.get("max_samples"),
+                )
+            elif cfg["type"] == "hf_parquet_potholes":
+                raw_list = download_hf_parquet_potholes(
+                    repo=cfg["repo"],
+                    max_samples=cfg.get("max_samples", 500),
                 )
             elif cfg["type"] == "github_tree":
                 raw_list = download_github_tree_images(
                     repo=cfg["repo"],
                     subfolder=cfg["path"],
-                    max_samples=cfg.get("max_samples", 400),
+                    max_samples=cfg.get("max_samples", 450),
                 )
 
             stats[cls_name]["raw_downloaded"] += len(raw_list)
@@ -281,7 +317,7 @@ def process_and_split_dataset():
                 img.save(out_path, format="JPEG", quality=92)
 
     print("\n" + "=" * 60)
-    print("DATASET PIPELINE SUMMARY")
+    print("FINAL DATASET SPLIT SUMMARY")
     print("=" * 60)
     print(f"{'Class':<20} | {'Raw':<6} | {'Corrupt':<8} | {'Dupes':<6} | {'Clean':<6} | {'Train':<6} | {'Val':<6} | {'Test':<6}")
     print("-" * 80)

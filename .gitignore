@@ -12,4 +12,6 @@ models/*.pt
 models/*.onnx
 models/*.bin
 models/*.json
+dataset/
+dataset_staging/
 .DS_Store
