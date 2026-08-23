@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # AI Verification Thresholds (Rules.md §1.2)
     # ai_confidence_score < 0.6 -> needs_manual_review = True
     AI_CONFIDENCE_THRESHOLD: float = 0.6
+    # Ambang untuk auto-verify. Confidence antara THRESHOLD dan AUTO -> manual review
+    # (mitigasi OOD foto asing ber-confidence menengah, FIX-1 lanjutan).
+    AI_CONFIDENCE_AUTO_THRESHOLD: float = 0.85
 
     # Kota Malang Bounding Box Coordinates (Rules.md §2.1)
     MALANG_BBOX_MIN_LAT: float = -8.0500

@@ -5,6 +5,9 @@ from pathlib import Path
 import pytest
 from httpx import AsyncClient
 
+from app.core.config import settings
+from app.services.yolo_service import YOLOClassificationService
+
 # Pick a real sample image from test set if exists, or generate a simple valid image
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEST_DIR = BASE_DIR / "dataset" / "test"
@@ -53,10 +56,42 @@ async def test_verify_report_valid_and_approved(client: AsyncClient):
     assert result["gps_valid"] is True
     assert result["timestamp_valid"] is True
     assert result["ai_confidence_score"] >= 0.6
+    assert result["ai_confidence_score"] >= settings.AI_CONFIDENCE_AUTO_THRESHOLD  # auto-verify butuh confidence tinggi
     assert result["is_valid"] is True
     assert result["needs_manual_review"] is False
     assert result["_placeholder"] is False
     assert len(result["description_auto"]) > 10
+
+
+@pytest.mark.asyncio
+async def test_verify_report_mid_confidence_requires_manual_review(client: AsyncClient, monkeypatch):
+    """
+    OOD guard lanjutan: confidence menengah (THRESHOLD <= conf < AUTO_THRESHOLD)
+    tidak boleh auto-verify walau GPS & timestamp valid.
+    Expected: is_valid = False, needs_manual_review = True.
+    """
+    def fake_predict(self, image_url=None, image_base64=None):
+        # (predicted_category, confidence, class_probs, damage_severity)
+        return ("Drainase", 0.70, {"Drainase": 0.70}, 0.5)
+
+    monkeypatch.setattr(YOLOClassificationService, "predict", fake_predict)
+
+    img_b64 = get_sample_test_image_base64("Jalan Berlubang")
+    payload = {
+        "image_base64": img_b64,
+        "claimed_category": "Drainase",
+        "latitude": -7.9826,
+        "longitude": 112.6308,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    response = await client.post("/v1/verify", json=payload)
+    assert response.status_code == 200
+    result = response.json()["data"]
+    assert result["gps_valid"] is True
+    assert result["timestamp_valid"] is True
+    assert result["ai_confidence_score"] == 0.70
+    assert result["is_valid"] is False
+    assert result["needs_manual_review"] is True
 
 
 @pytest.mark.asyncio

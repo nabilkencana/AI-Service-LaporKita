@@ -52,3 +52,13 @@ Evaluasi dilakukan pada **Held-out Test Set 6-Kelas Bebas Kebocoran** dengan tot
 ### 3.5 Kebijakan Fail-Closed pada Seluruh Komponen AI
 - Jika bobot model (`.pt` atau `.json`) tidak tersedia atau API Key LLM belum dikonfigurasi, service **TIDAK PERNAH** memfabrikasi hasil mock dengan response 200 palsu.
 - Sistem akan mengembalikan response HTTP 503 `MODEL_NOT_AVAILABLE` atau `LLM_KEY_NOT_CONFIGURED`.
+
+### 3.6 Aturan Dua-Ambang Confidence (OOD Guard Lanjutan)
+- `AI_CONFIDENCE_THRESHOLD = 0.6` — di bawah ini: `is_valid=false`.
+- `AI_CONFIDENCE_AUTO_THRESHOLD = 0.85` — **auto-verify hanya** jika confidence ≥ 0.85
+  (dan GPS + timestamp valid). Band 0.6–0.85 → `is_valid=false`,
+  `needs_manual_review=true` (menangkap foto asing ber-confidence menengah).
+- **Batas yang tersisa (jujur):** foto asing yang secara visual SANGAT mirip
+  dengan kelas asli dan mendapat confidence ≥ 0.85 masih bisa auto-verified.
+  Mitigasi penuh memerlukan sampel negatif dunia nyata yang lebih banyak dan
+  beragam pada retrain berikutnya (bukan hanya sintetis).

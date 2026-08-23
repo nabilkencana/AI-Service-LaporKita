@@ -66,7 +66,9 @@ async def _run_verification(payload: VerifyReportRequest) -> dict:
     # 4. Verification Decision Rules (Rules.md §1.2 & FIX-1 OOD Guard)
     is_ood = predicted_category == "bukan_fasilitas"
     confidence_passed = (ai_confidence_score >= settings.AI_CONFIDENCE_THRESHOLD) and not is_ood
-    is_valid = confidence_passed and gps_is_valid and timestamp_is_valid
+    # Auto-verify hanya untuk confidence TINGGI (>= AUTO_THRESHOLD); band menengah -> review manual
+    confidence_auto = ai_confidence_score >= settings.AI_CONFIDENCE_AUTO_THRESHOLD
+    is_valid = confidence_passed and confidence_auto and gps_is_valid and timestamp_is_valid
     needs_manual_review = not is_valid
 
     # 5. Generate description & reasons
@@ -76,12 +78,21 @@ async def _run_verification(payload: VerifyReportRequest) -> dict:
         damage_severity = 0.0
     else:
         description_auto = generate_auto_description(predicted_category, damage_severity, ai_confidence_score)
-        reason = (
-            "Lolos verifikasi otomatis (AI confidence >= threshold, GPS dan timestamp valid)"
-            if is_valid
-            else f"Perlu review manual: confidence={ai_confidence_score:.2f}, "
-                 f"gps_valid={gps_is_valid}, timestamp_valid={timestamp_is_valid}"
-        )
+        if is_valid:
+            reason = (
+                f"Lolos verifikasi otomatis (AI confidence >= {settings.AI_CONFIDENCE_AUTO_THRESHOLD}, "
+                "GPS dan timestamp valid)"
+            )
+        elif confidence_passed and not confidence_auto:
+            reason = (
+                f"Perlu review manual: confidence menengah "
+                f"({ai_confidence_score:.2f} < {settings.AI_CONFIDENCE_AUTO_THRESHOLD})"
+            )
+        else:
+            reason = (
+                f"Perlu review manual: confidence={ai_confidence_score:.2f}, "
+                f"gps_valid={gps_is_valid}, timestamp_valid={timestamp_is_valid}"
+            )
 
     return {
         "ai_confidence_score": ai_confidence_score,

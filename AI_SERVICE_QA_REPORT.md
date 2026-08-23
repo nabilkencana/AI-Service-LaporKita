@@ -830,3 +830,20 @@ Data uji (users/reports/categories) sudah dibersihkan dari DB.
 
 
 
+
+---
+
+# 16. OOD Guard Lanjutan — Aturan Dua-Ambang Confidence (Hermes)
+
+## 16.1 Implementasi
+- `AI_CONFIDENCE_AUTO_THRESHOLD = 0.85` ditambahkan (config + compose + .env.example)
+- `verification.py`: auto-verify HANYA jika confidence >= 0.85 (dan GPS+timestamp valid);
+  band 0.6–0.85 → `is_valid=false`, `needs_manual_review=true` dengan reason eksplisit
+- Test baru: `test_verify_report_mid_confidence_requires_manual_review` (monkeypatch conf 0.70
+  → manual review) — total 36/36 test PASS
+- Deployed ulang; live test: foto asing conf 0.58 → manual review (sebelumnya auto)
+
+## 16.2 Batas yang Tersisa (jujur)
+Foto asing dengan kemiripan visual SANGAT tinggi (confidence >= 0.85, mis. 0.90) masih bisa
+auto-verified. Mitigasi penuh: sampel negatif dunia nyata pada retrain berikutnya
+(didokumentasikan di LIMITATIONS.md §3.6).
