@@ -1,102 +1,384 @@
-# 🤖 LaporKita — AI Service
-
 <div align="center">
 
-**Microservice Python FastAPI mandiri untuk platform LaporKita — platform pelaporan kerusakan infrastruktur publik Kota Malang berbasis AI.**
+# 🧠 LaporKita AI Service
 
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![YOLOv11](https://img.shields.io/badge/YOLOv11--cls-99.49%25_Acc-FF6F00?style=for-the-badge&logo=opencv&logoColor=white)](https://ultralytics.com)
-[![XGBoost](https://img.shields.io/badge/XGBoost-R²%3D0.9635-4CAF50?style=for-the-badge)](https://xgboost.readthedocs.io)
-[![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
-[![Docker](https://img.shields.io/badge/Docker-Self--Contained-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+<p align="center">
+  <img src="https://img.shields.io/badge/FastAPI-0.110%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/YOLOv11--cls-99.49%25%20Acc-FF6B35?style=for-the-badge&logo=pytorch&logoColor=white" />
+  <img src="https://img.shields.io/badge/XGBoost-R²%3D0.9635-F7931E?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Gemini%202.5%20Flash-LLM-4285F4?style=for-the-badge&logo=google&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tests-21%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white" />
+</p>
+
+> **Microservice Python FastAPI** mandiri untuk platform **LaporKita** — platform pelaporan kerusakan infrastruktur publik **Kota Malang** berbasis AI.
+>
+> Menyediakan tiga kapabilitas AI/ML end-to-end: **Computer Vision verifikasi laporan**, **Urban Risk Prediction**, dan **Policy Impact Simulation** berbasis LLM.
 
 </div>
-
-> **Microservice Python FastAPI** mandiri untuk platform **LaporKita** — platform pelaporan kerusakan infrastruktur publik Kota Malang berbasis AI.
-
-Service ini menyediakan tiga kapabilitas AI/ML utama:
-1. **AI Verification** — Klasifikasi gambar 5 kelas kerusakan fasilitas publik menggunakan Computer Vision (YOLOv11-cls)
-2. **Urban Risk Prediction** — Estimasi probabilitas risiko banjir dan stres wilayah menggunakan Machine Learning (XGBoost)
-3. **Policy Simulator** — Proyeksi dampak kebijakan pemerintah kota menggunakan LLM (Google Gemini 2.5 Flash)
 
 ---
 
 ## 📑 Daftar Isi
 
-- [Arsitektur & Infrastruktur](#️-arsitektur--infrastruktur)
-- [Struktur Direktori Proyek](#-struktur-direktori-proyek)
-- [Cara Menjalankan Lokal](#-cara-menjalankan-lokal-venv)
-- [Cara Menjalankan dengan Docker](#-cara-menjalankan-dengan-docker)
-- [Daftar Lengkap Environment Variables](#️-daftar-lengkap-environment-variables)
-- [Routing & URL Mapping (Dual-Prefix)](#-routing--url-mapping-dual-prefix)
-- [Dokumentasi Lengkap Semua Endpoint](#-dokumentasi-lengkap-semua-endpoint)
+- [🌐 Gambaran Umum Platform](#-gambaran-umum-platform)
+- [🏛️ Arsitektur Sistem](#️-arsitektur-sistem)
+  - [Topologi Microservice](#topologi-microservice)
+  - [Alur Data End-to-End](#alur-data-end-to-end)
+  - [Alur Verifikasi AI](#alur-verifikasi-ai)
+  - [Alur Prediksi Risiko](#alur-prediksi-risiko)
+  - [Alur Policy Simulator](#alur-policy-simulator)
+- [🧩 Teknologi Stack](#-teknologi-stack)
+- [📁 Struktur Direktori Proyek](#-struktur-direktori-proyek)
+- [🚀 Cara Menjalankan Lokal](#-cara-menjalankan-lokal-venv)
+- [🐳 Cara Menjalankan dengan Docker](#-cara-menjalankan-dengan-docker)
+- [⚙️ Environment Variables](#️-daftar-lengkap-environment-variables)
+- [🔀 Routing & URL Mapping](#-routing--url-mapping-dual-prefix)
+- [📡 Dokumentasi Lengkap Semua Endpoint](#-dokumentasi-lengkap-semua-endpoint)
   - [GET /health](#1-get-health)
-  - [POST /v1/verify — Canonical (envelope)](#2-post-v1verify--canonical-envelope)
-  - [POST /api/v1/verify — NestJS Compat (flat)](#3-post-apiv1verify--nestjs-compat-flat)
+  - [POST /v1/verify — Canonical](#2-post-v1verify--canonical-envelope)
+  - [POST /api/v1/verify — NestJS Compat](#3-post-apiv1verify--nestjs-compat-flat)
   - [POST /v1/predict-risk](#4-post-v1predict-risk)
-  - [POST /v1/predict/zone-metrics — NestJS Compat](#5-post-v1predictzoneметрики--nestjs-compat)
+  - [POST /v1/predict/zone-metrics](#5-post-v1predictzone-metrics--nestjs-compat)
   - [POST /v1/policy-simulate](#6-post-v1policy-simulate)
-- [Format Response Envelope Standar](#-format-response-envelope-standar)
-- [Error Codes & HTTP Status Reference](#-error-codes--http-status-reference)
-- [Ringkasan Dataset Publik](#-ringkasan-dataset-publik-5-kategori)
-- [Metrik Evaluasi Model Riil](#-metrik-evaluasi-model-riil)
-- [Arsitektur Decision Log](#-arsitektur-decision-log)
+- [📐 Format Response Envelope](#-format-response-envelope-standar)
+- [🚨 Error Codes & HTTP Status Reference](#-error-codes--http-status-reference)
+- [📊 Dataset & Training](#-ringkasan-dataset-publik-5-kategori)
+- [📈 Metrik Evaluasi Model](#-metrik-evaluasi-model-riil)
+- [🏗️ Arsitektur Decision Log](#️-arsitektur-decision-log)
 - [⚠️ Disclaimer & Known Limitations](#️-disclaimer--known-limitations-produksi)
 
 ---
 
-## 🏛️ Arsitektur & Infrastruktur
+## 🌐 Gambaran Umum Platform
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                   LaporKita — Citizen Reporting Platform                │
-│                                                                         │
-│   Mobile App (Flutter)  ──►  Backend Gateway (NestJS :3000)            │
-│                                        │                               │
-│                              Internal REST HTTP                         │
-│                                        │                               │
-│                                        ▼                               │
-│             ┌──────────────────────────────────────────┐               │
-│             │       AI Microservice  (FastAPI :8000)   │               │
-│             │                                          │               │
-│             │  ┌────────────┐  ┌──────────────────┐   │               │
-│             │  │ /v1/verify │  │/v1/predict-risk  │   │               │
-│             │  │ /api/v1/   │  │/v1/predict/      │   │               │
-│             │  │  verify    │  │  zone-metrics    │   │               │
-│             │  └─────┬──────┘  └────────┬─────────┘   │               │
-│             │        │                  │              │               │
-│             │  ┌─────▼──────┐  ┌────────▼─────────┐   │               │
-│             │  │  YOLOv11   │  │  XGBoost Regr.  │   │               │
-│             │  │  -cls nano │  │  flood-risk.json │   │               │
-│             │  │  (2.1 ms)  │  │  (R²=0.9635)    │   │               │
-│             │  └────────────┘  └──────────────────┘   │               │
-│             │                                          │               │
-│             │  ┌──────────────────────────────────┐   │               │
-│             │  │     /v1/policy-simulate          │   │               │
-│             │  │  Gemini 2.5 Flash + Structured  │   │               │
-│             │  │  JSON Pydantic Validation        │   │               │
-│             │  └──────────────────────────────────┘   │               │
-│             └──────────────────────────────────────────┘               │
-│                                                                         │
-│   Infrastructure: Docker · PostgreSQL (PostGIS) · Redis · Minio        │
-└─────────────────────────────────────────────────────────────────────────┘
+LaporKita adalah platform **pelaporan kerusakan infrastruktur publik** berbasis AI untuk Kota Malang. Warga dapat melaporkan kerusakan jalan, drainase, lampu jalan, rambu lalu lintas, dan trotoar melalui aplikasi mobile. AI Service berperan sebagai **otak analitik** platform ini.
+
+```mermaid
+graph LR
+    Citizen["👤 Warga Kota Malang"]
+    Mobile["📱 Mobile App\n(Flutter)"]
+    Backend["🖥️ Backend Gateway\n(NestJS :3000)"]
+    AI["🤖 AI Microservice\n(FastAPI :8000)"]
+    DB[("🗄️ PostgreSQL\n+ PostGIS")]
+    Gov["🏛️ Dashboard\nPemerintah Kota"]
+
+    Citizen -->|"Foto + GPS + Kategori"| Mobile
+    Mobile -->|"REST API"| Backend
+    Backend -->|"Internal HTTP"| AI
+    AI -->|"Verifikasi + Skor"| Backend
+    Backend --> DB
+    DB --> Gov
+    Gov -->|"Tindak lanjut"| Citizen
+
+    style AI fill:#FF6B35,color:#fff,stroke:#FF6B35
+    style Mobile fill:#4285F4,color:#fff
+    style Backend fill:#34A853,color:#fff
+    style Gov fill:#9B59B6,color:#fff
 ```
 
-### Teknologi Stack
+**Tiga Kapabilitas AI Utama:**
+
+| # | Fitur | Model | Performa |
+|---|---|---|---|
+| 1 | 🔍 **AI Verification** | YOLOv11-cls (Computer Vision) | 99.49% Test Accuracy, ~2.1ms/image |
+| 2 | 📊 **Urban Risk Prediction** | XGBoost Regressor | R² = 0.9635, RMSE = 0.0490 |
+| 3 | 🧬 **Policy Simulator** | Google Gemini 2.5 Flash (LLM) | Structured JSON output, 20s timeout |
+
+---
+
+## 🏛️ Arsitektur Sistem
+
+### Topologi Microservice
+
+```mermaid
+graph TB
+    subgraph Client["📱 Client Layer"]
+        Flutter["Flutter Mobile App"]
+    end
+
+    subgraph Gateway["🖥️ Backend Gateway (NestJS :3000)"]
+        NestAuth["Auth Service"]
+        NestAI["AI Verification Service\n(ai-verification.service.js)"]
+        NestPred["Prediction Service\n(prediction.service.js)"]
+        NestPolicy["Policy Service\n(policy.service.js)"]
+    end
+
+    subgraph AIService["🤖 AI Microservice (FastAPI :8000)"]
+        direction TB
+        Router["FastAPI Router\n(Dual-Prefix)"]
+
+        subgraph Endpoints["Endpoints"]
+            Verify["/v1/verify\n/api/v1/verify"]
+            Risk["/v1/predict-risk\n/v1/predict/zone-metrics"]
+            Policy["/v1/policy-simulate"]
+            Health["/health"]
+        end
+
+        subgraph Services["Services Layer"]
+            YOLOSvc["YOLOService\n(Singleton, Lazy-Loaded)"]
+            XGBSvc["XGBoostService\n(Singleton, Lazy-Loaded)"]
+            GeminiSvc["GeminiService\n(20s Timeout)"]
+        end
+
+        subgraph Utils["Utils Layer"]
+            GPS["GPS Validator\n(Malang BBox)"]
+            Scoring["Smart Priority\nScoring"]
+        end
+
+        subgraph Models["🧠 Model Weights"]
+            YOLO["yolov11-cls-laporkita.pt\n(5-class, ~5.5MB)"]
+            XGB["xgboost-flood-risk.json\nR2=0.9635"]
+        end
+    end
+
+    subgraph Infra["☁️ Infrastructure"]
+        PG[("PostgreSQL\n+ PostGIS")]
+        Redis[("Redis Cache")]
+        Minio["Minio\nObject Storage"]
+    end
+
+    Flutter --> NestAuth
+    Flutter --> Gateway
+    NestAI -->|"POST /api/v1/verify"| Verify
+    NestPred -->|"POST /api/v1/predict-risk\nPOST /api/v1/predict/zone-metrics"| Risk
+    NestPolicy -->|"POST /api/v1/policy-simulate"| Policy
+
+    Router --> Endpoints
+    Verify --> YOLOSvc
+    Verify --> GPS
+    Verify --> Scoring
+    Risk --> XGBSvc
+    Policy --> GeminiSvc
+
+    YOLOSvc --> YOLO
+    XGBSvc --> XGB
+
+    Gateway --> PG
+    Gateway --> Redis
+    Gateway --> Minio
+
+    style AIService fill:#FFF3E0,stroke:#FF6B35,stroke-width:2px
+    style Models fill:#E8F5E9,stroke:#34A853
+    style Infra fill:#E3F2FD,stroke:#1976D2
+```
+
+---
+
+### Alur Data End-to-End
+
+```mermaid
+sequenceDiagram
+    actor Warga
+    participant Flutter as 📱 Flutter App
+    participant NestJS as 🖥️ NestJS Backend
+    participant FastAPI as 🤖 FastAPI AI Service
+    participant YOLO as 🧠 YOLOv11
+    participant XGB as 📊 XGBoost
+    participant Gemini as ✨ Gemini 2.5 Flash
+    participant DB as 🗄️ PostgreSQL
+
+    Warga->>Flutter: Foto + GPS + Kategori
+    Flutter->>NestJS: POST /reports (multipart)
+    NestJS->>FastAPI: POST /api/v1/verify (image_base64 / photo_url)
+
+    FastAPI->>FastAPI: Validasi GPS (Malang BBox)
+    FastAPI->>FastAPI: Validasi Timestamp
+    FastAPI->>YOLO: Inferensi klasifikasi 5 kelas
+    YOLO-->>FastAPI: class_probabilities + confidence
+    FastAPI->>FastAPI: Hitung urgency_score
+    FastAPI-->>NestJS: confidence, category, is_valid, urgency_score
+
+    NestJS->>DB: Simpan laporan + skor
+    NestJS-->>Flutter: Report ID + status
+
+    Note over NestJS, FastAPI: Paralel — Urban Risk Assessment
+    NestJS->>FastAPI: POST /api/v1/predict/zone-metrics
+    FastAPI->>XGB: Inferensi flood risk
+    XGB-->>FastAPI: flood_risk_probability
+    FastAPI-->>NestJS: risk_level + recommendation
+
+    Note over NestJS, FastAPI: Opsional — Policy Simulation
+    NestJS->>FastAPI: POST /api/v1/policy-simulate
+    FastAPI->>Gemini: Structured JSON prompt
+    Gemini-->>FastAPI: Narasi + projected_data
+    FastAPI-->>NestJS: result_narrative + key_recommendations
+
+    NestJS->>DB: Update zone risk metrics
+    Warga->>Flutter: Terima notifikasi tindak lanjut
+```
+
+---
+
+### Alur Verifikasi AI
+
+```mermaid
+flowchart TD
+    Input(["📥 Input Request\nimage_base64 / photo_url\n+ GPS + timestamp + category"])
+
+    GPS{"🗺️ GPS dalam\nBounding Box\nKota Malang?"}
+    TS{"🕐 Timestamp\nValid?\ntidak anomali"}
+    YOLO["🧠 YOLOv11-cls Inference\n~2.1ms per image\n5 kelas output"]
+    CONF{"🎯 Confidence\nbig-or-equal threshold\ndefault: 0.60?"}
+
+    AutoApprove(["✅ is_valid: true\nneeds_manual_review: false\nAUTO-APPROVED"])
+    ManualReview(["⚠️ is_valid: false\nneeds_manual_review: true\nQUEUED FOR REVIEW"])
+
+    Score["📊 Hitung urgency_score\n= 0.35 x severity\n+ 0.25 x support\n+ 0.20 x density\n+ 0.20 x category_weight"]
+
+    Response(["📤 Response JSON\nai_confidence_score\npredicted_category\nurgency_score\nclass_probabilities"])
+
+    Error422(["❌ HTTP 422\nINVALID_IMAGE\nor VALIDATION_ERROR"])
+
+    Input --> GPS
+    GPS -->|"❌ Di luar Malang"| ManualReview
+    GPS -->|"✅ Dalam Malang"| TS
+    TS -->|"❌ Anomali"| ManualReview
+    TS -->|"✅ Valid"| YOLO
+    YOLO -->|"Gagal decode gambar"| Error422
+    YOLO --> CONF
+    CONF -->|"✅ Ya"| AutoApprove
+    CONF -->|"❌ Tidak"| ManualReview
+
+    AutoApprove --> Score
+    ManualReview --> Score
+    Score --> Response
+
+    style AutoApprove fill:#E8F5E9,stroke:#34A853,color:#1B5E20
+    style ManualReview fill:#FFF8E1,stroke:#F9A825,color:#F57F17
+    style Error422 fill:#FFEBEE,stroke:#C62828,color:#B71C1C
+    style YOLO fill:#E3F2FD,stroke:#1976D2,color:#0D47A1
+```
+
+---
+
+### Alur Prediksi Risiko
+
+```mermaid
+flowchart LR
+    subgraph Input["📥 Input"]
+        ZoneID["zone_id"]
+        ReportDens["report_density"]
+        Weather["weather_context\nrainfall_mm, temp_c\ndrainage_issue_ratio"]
+        Traffic["traffic_density"]
+    end
+
+    subgraph ZoneMetrics["🔄 /zone-metrics\nNestJS Compat"]
+        Estimate["Estimasi parameter\ndari active_reports\nrainfall = min(100, Nx4.5+10)\ntraffic = min(0.95, 0.3+Nx0.05)"]
+    end
+
+    subgraph XGB["🧠 XGBoost Inference"]
+        Feature["Feature Matrix\n5 fitur\nPandas DataFrame"]
+        Model["XGBRegressor\nn_estimators=300\nmax_depth=6, lr=0.05"]
+        Prob["flood_risk_probability\n0.0 to 1.0"]
+    end
+
+    subgraph RiskLevel["📊 Risk Classification"]
+        Low["🟢 LOW\n< 0.40"]
+        Medium["🟡 MEDIUM\n0.40 to 0.70"]
+        High["🔴 HIGH\n> 0.70"]
+    end
+
+    subgraph Output["📤 Output"]
+        Resp["risk_level\npredicted_stress_level\nfactors breakdown\nrecommendation text"]
+    end
+
+    Input --> Feature
+    ZoneMetrics --> Feature
+    Feature --> Model
+    Model --> Prob
+    Prob --> Low
+    Prob --> Medium
+    Prob --> High
+    Low & Medium & High --> Resp
+
+    style High fill:#FFEBEE,stroke:#C62828
+    style Medium fill:#FFF8E1,stroke:#F9A825
+    style Low fill:#E8F5E9,stroke:#34A853
+```
+
+---
+
+### Alur Policy Simulator
+
+```mermaid
+sequenceDiagram
+    participant Client as 🖥️ NestJS / Client
+    participant Router as 🔀 FastAPI Router
+    participant Gemini as ✨ Gemini 2.5 Flash API
+    participant Pydantic as 🛡️ Pydantic Validator
+
+    Client->>Router: POST /v1/policy-simulate prompt_text, zone_id, time_horizon_months, parameters
+    Router->>Router: Validate input (5 to 2000 chars)
+
+    Router->>Gemini: Structured JSON prompt max 20s timeout
+
+    alt Berhasil kurang dari 20 detik
+        Gemini-->>Router: Raw JSON response
+        Router->>Pydantic: Validate PolicyProjectionData schema
+        alt JSON valid
+            Pydantic-->>Router: Parsed PolicySimulateData
+            Router-->>Client: 200 OK result_narrative, result_data, key_recommendations
+        else JSON invalid
+            Pydantic-->>Router: ValidationError
+            Router-->>Client: 502 GEMINI_INVALID_RESPONSE
+        end
+    else Timeout lebih dari atau sama dengan 20 detik
+        Gemini-->>Router: TimeoutError
+        Router-->>Client: 504 GEMINI_TIMEOUT
+    end
+```
+
+---
+
+## 🧩 Teknologi Stack
+
+```mermaid
+graph LR
+    subgraph API["🌐 API Layer"]
+        FastAPI["FastAPI >= 0.110\nASGI + OpenAPI"]
+        Uvicorn["Uvicorn >= 0.28\nuvloop ASGI"]
+        Pydantic["Pydantic v2 >= 2.6\nValidation + Settings"]
+    end
+
+    subgraph AI["🧠 AI/ML Layer"]
+        YOLO["Ultralytics >= 8.3\nYOLOv11-cls"]
+        XGB["XGBoost >= 2.0\nXGBRegressor"]
+        Gemini["google-genai >= 1.0\nGemini 2.5 Flash"]
+        PIL["Pillow >= 10.0\nImage Processing"]
+        Pandas["Pandas >= 2.0\n+ NumPy >= 1.24\nFeature Matrix"]
+    end
+
+    subgraph Infra["☁️ Infrastructure"]
+        Docker["Docker + Compose\nSelf-Contained"]
+        PG["PostgreSQL\n+ PostGIS"]
+        Redis["Redis"]
+        Minio["MinIO"]
+    end
+
+    FastAPI --> YOLO
+    FastAPI --> XGB
+    FastAPI --> Gemini
+    Uvicorn --> FastAPI
+    Pydantic --> FastAPI
+    YOLO --> PIL
+    XGB --> Pandas
+    Docker --> FastAPI
+```
 
 | Layer | Teknologi | Versi | Peran |
 |---|---|---|---|
-| Web Framework | FastAPI | `>=0.110.0` | ASGI routing, Pydantic validation, OpenAPI docs |
-| ASGI Server | Uvicorn | `>=0.28.0` | Production ASGI server with uvloop |
-| Computer Vision | Ultralytics YOLOv11 | `>=8.3.0` | Image classification (5-class, `-cls` mode) |
-| ML Baseline | XGBoost | `>=2.0.0` | Risk regression (`XGBRegressor`) |
-| LLM | Google Gemini 2.5 Flash | via `google-genai>=1.0.0` | Structured JSON policy simulation |
-| Image Processing | Pillow | `>=10.0.0` | Base64 decode, URL fetch, YOLO pre-processing |
-| Data Processing | Pandas + NumPy | `>=2.0.0 / >=1.24.0` | XGBoost feature matrix |
-| Validation | Pydantic v2 | `>=2.6.0` | Schema + settings validation |
-| Config | Pydantic Settings | `>=2.2.0` | Environment variables from `.env` |
-| Containerization | Docker + Compose | - | Self-contained deployment |
+| Web Framework | **FastAPI** | `>=0.110.0` | ASGI routing, Pydantic validation, OpenAPI docs |
+| ASGI Server | **Uvicorn** | `>=0.28.0` | Production ASGI server with uvloop |
+| Computer Vision | **Ultralytics YOLOv11** | `>=8.3.0` | Image classification (5-class, `-cls` mode) |
+| ML Baseline | **XGBoost** | `>=2.0.0` | Risk regression (`XGBRegressor`) |
+| LLM | **Google Gemini 2.5 Flash** | via `google-genai>=1.0.0` | Structured JSON policy simulation |
+| Image Processing | **Pillow** | `>=10.0.0` | Base64 decode, URL fetch, YOLO pre-processing |
+| Data Processing | **Pandas + NumPy** | `>=2.0.0 / >=1.24.0` | XGBoost feature matrix |
+| Validation | **Pydantic v2** | `>=2.6.0` | Schema + settings validation |
+| Config | **Pydantic Settings** | `>=2.2.0` | Environment variables dari `.env` |
+| Containerization | **Docker + Compose** | — | Self-contained deployment |
 
 ---
 
@@ -126,9 +408,11 @@ ai-service/
 │   │   ├── gps_validator.py        # Malang bbox check + timestamp anomaly detection
 │   │   └── scoring.py              # Smart Priority urgency score calculation
 │   └── main.py                     # FastAPI app, lifespan, global error handlers, router mounting
+│
 ├── models/
-│   ├── yolov11-cls-laporkita.pt    # Trained YOLOv11-cls model weights (5 classes)
+│   ├── yolov11-cls-laporkita.pt    # Trained YOLOv11-cls model weights (5 classes, ~5.5MB)
 │   └── xgboost-flood-risk.json     # Trained XGBoost regressor weights
+│
 ├── scripts/
 │   ├── download_datasets.py        # Fase 2: dataset acquisition dari sumber publik
 │   ├── prepare_dataset.py          # Fase 2: cleaning, stratified 70/15/15 split
@@ -137,24 +421,64 @@ ai-service/
 │   ├── train_xgboost_model.py      # Fase 4: training XGBoost + evaluasi
 │   ├── test_live_verification.py   # Fase 6: live E2E test semua 5 kelas
 │   └── test_live_gemini_policy.py  # Fase 6: live E2E test Gemini API
+│
 ├── tests/
 │   ├── test_health.py              # Health check + model readiness verification
 │   ├── test_verification.py        # 6 test cases: 5 kelas, GPS anomali, timestamp, corrupt image
 │   ├── test_prediction.py          # 3 test cases: stress rendah/tinggi, invalid input
 │   ├── test_policy_simulator.py    # 4 test cases: sukses, malformed JSON, timeout, validasi input
 │   └── test_utils.py               # 7 test cases: GPS bbox, timestamp edge cases, scoring formula
+│
 ├── dataset/
 │   ├── train/                      # 1.796 gambar (70%), dibagi per kelas
 │   ├── val/                        # 383 gambar (15%), dibagi per kelas
 │   └── test/                       # 390 gambar (15%), dibagi per kelas
+│
 ├── dataset_report.md               # Dokumentasi lengkap sumber dataset, lisensi, distribusi
 ├── training_report.md              # Metrik evaluasi riil YOLOv11 (99.49% test set accuracy)
+├── Architecture.md                 # Arsitektur teknis detail
+├── Design.md                       # Design decisions & patterns
+├── ERD.md                          # Entity Relationship Diagram
+├── PRD.md                          # Product Requirements Document
+├── Rules.md                        # Business rules & thresholds
+│
 ├── Dockerfile                      # Single-stage, CPU PyTorch, model weights di-copy ke image
 ├── docker-compose.yml              # Stack orchestration + env injection
 ├── requirements.txt                # Pinned dependencies
 ├── pytest.ini                      # pytest asyncio configuration
 ├── .env.example                    # Template environment variables
 └── README.md
+```
+
+**Dependensi antar modul:**
+
+```mermaid
+graph TD
+    Main["main.py\nFastAPI App + Lifespan"] --> VR["routers/verification.py"]
+    Main --> PR["routers/prediction.py"]
+    Main --> PSR["routers/policy_simulator.py"]
+
+    VR --> YS["services/yolo_service.py"]
+    VR --> GPS["utils/gps_validator.py"]
+    VR --> SC["utils/scoring.py"]
+    VR --> VS["schemas/verification.py"]
+
+    PR --> XS["services/xgboost_service.py"]
+    PR --> PDS["schemas/prediction.py"]
+
+    PSR --> GS["services/gemini_service.py"]
+    PSR --> PS["schemas/policy_simulator.py"]
+
+    YS --> YOLO["models/yolov11-cls-laporkita.pt"]
+    XS --> XGB["models/xgboost-flood-risk.json"]
+
+    Main --> CFG["core/config.py\nPydantic Settings"]
+    Main --> LOG["core/logging.py"]
+    VR & PR & PSR --> BASE["schemas/base.py\nAPIResponse[T]"]
+
+    style Main fill:#FF6B35,color:#fff
+    style YOLO fill:#E8F5E9,stroke:#34A853
+    style XGB fill:#E8F5E9,stroke:#34A853
 ```
 
 ---
@@ -179,7 +503,7 @@ pip install -r requirements.txt
 
 # 4. Buat file .env dari template
 cp .env.example .env
-# Edit .env dan isi GEMINI_API_KEY dengan API key Anda
+# Edit .env dan isi GEMINI_API_KEY dengan API key dari https://aistudio.google.com
 
 # 5. Jalankan unit test (21 tests, seharusnya semua pass)
 pytest -v
@@ -188,8 +512,7 @@ pytest -v
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-> **⚠️ Perhatian:** Gunakan `app.main:app` (bukan `main:app`). Service memerlukan model weights
-> di `models/yolov11-cls-laporkita.pt` dan `models/xgboost-flood-risk.json`.
+> **⚠️ Perhatian:** Gunakan `app.main:app` (bukan `main:app`). Service memerlukan model weights di `models/yolov11-cls-laporkita.pt` dan `models/xgboost-flood-risk.json`.
 
 Setelah server aktif, buka:
 - **Swagger UI (Interaktif):** `http://localhost:8000/docs`
@@ -200,7 +523,29 @@ Setelah server aktif, buka:
 
 ## 🐳 Cara Menjalankan dengan Docker
 
-Service dikemas sebagai container mandiri (*self-contained*) — model weights sudah ter-copy ke dalam image saat `docker build`.
+Service dikemas sebagai container **mandiri** (*self-contained*) — model weights sudah ter-copy ke dalam image saat `docker build`.
+
+### Lifecycle Container
+
+```mermaid
+stateDiagram-v2
+    [*] --> Building : docker compose up --build
+    Building --> Starting : Image built, model weights embedded
+    Starting --> HealthCheck : Uvicorn listening port 8000
+
+    state HealthCheck {
+        [*] --> LoadYOLO : Lifespan startup
+        LoadYOLO --> LoadXGB
+        LoadXGB --> Ready
+        Ready --> [*]
+    }
+
+    HealthCheck --> Running : /health status ok
+    Running --> Degraded : Model load failure
+    Running --> Stopped : docker compose down
+    Degraded --> [*]
+    Stopped --> [*]
+```
 
 ### Menggunakan Docker Compose (Rekomendasi)
 
@@ -265,7 +610,21 @@ curl -s http://localhost:8000/health | python3 -m json.tool
 
 ## ⚙️ Daftar Lengkap Environment Variables
 
-Semua variabel dikonfigurasi melalui file `.env` (diload oleh Pydantic Settings).
+Semua variabel dikonfigurasi melalui file `.env` (diload oleh Pydantic Settings dari `app/core/config.py`).
+
+```mermaid
+graph LR
+    ENV[".env file"] --> PS["Pydantic Settings\ncore/config.py"]
+    PS --> App["APP_NAME\nAPP_ENV\nPORT\nHOST\nLOG_LEVEL"]
+    PS --> ModelPaths["Model Paths\nCLASSIFICATION_MODEL_PATH\nXGBOOST_MODEL_PATH"]
+    PS --> GeminiConf["Gemini Config\nGEMINI_API_KEY\nGEMINI_MODEL_NAME"]
+    PS --> Thresh["AI Thresholds\nAI_CONFIDENCE_THRESHOLD"]
+    PS --> BBox["Malang BBox\nMALANG_BBOX_MIN_LAT\nMALANG_BBOX_MAX_LAT\nMALANG_BBOX_MIN_LON\nMALANG_BBOX_MAX_LON"]
+    PS --> Weights["Priority Weights\nWEIGHT_DAMAGE_SEVERITY\nWEIGHT_SUPPORT_COUNT\nWEIGHT_LOCATION_DENSITY\nWEIGHT_CATEGORY_URGENCY"]
+
+    style ENV fill:#FF6B35,color:#fff
+    style PS fill:#4285F4,color:#fff
+```
 
 | Variabel | Tipe | Default | Wajib | Deskripsi |
 |---|---|---|---|---|
@@ -274,20 +633,20 @@ Semua variabel dikonfigurasi melalui file `.env` (diload oleh Pydantic Settings)
 | `PORT` | `int` | `8000` | Tidak | Port listen server |
 | `HOST` | `string` | `0.0.0.0` | Tidak | Host listen server |
 | `LOG_LEVEL` | `string` | `INFO` | Tidak | Tingkat logging (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| **Model Paths** | | | | |
+| **— Model Paths —** | | | | |
 | `CLASSIFICATION_MODEL_PATH` | `string` | `models/yolov11-cls-laporkita.pt` | **Ya** | Path ke file weights YOLOv11 |
 | `XGBOOST_MODEL_PATH` | `string` | `models/xgboost-flood-risk.json` | **Ya** | Path ke file model XGBoost |
-| **Gemini LLM** | | | | |
-| `GEMINI_API_KEY` | `string` | `""` | **Ya** | API Key Google Gemini (dari Google AI Studio) |
+| **— Gemini LLM —** | | | | |
+| `GEMINI_API_KEY` | `string` | `""` | **Ya** | API Key Google Gemini (dari [Google AI Studio](https://aistudio.google.com)) |
 | `GEMINI_MODEL_NAME` | `string` | `gemini-2.5-flash` | Tidak | Identifier model Gemini |
-| **AI Verification Thresholds** | | | | |
+| **— AI Verification Thresholds —** | | | | |
 | `AI_CONFIDENCE_THRESHOLD` | `float` | `0.6` | Tidak | Ambang batas minimum confidence untuk auto-approve (`Rules.md §1.2`) |
-| **Kota Malang Bounding Box** | | | | |
+| **— Kota Malang Bounding Box —** | | | | |
 | `MALANG_BBOX_MIN_LAT` | `float` | `-8.0500` | Tidak | Batas selatan wilayah pilot (Kota Malang) |
 | `MALANG_BBOX_MAX_LAT` | `float` | `-7.9000` | Tidak | Batas utara wilayah pilot |
 | `MALANG_BBOX_MIN_LON` | `float` | `112.5500` | Tidak | Batas barat wilayah pilot |
 | `MALANG_BBOX_MAX_LON` | `float` | `112.7000` | Tidak | Batas timur wilayah pilot |
-| **Smart Priority Weights** | | | | |
+| **— Smart Priority Weights —** | | | | |
 | `WEIGHT_DAMAGE_SEVERITY` | `float` | `0.35` | Tidak | Bobot keparahan kerusakan (`Rules.md §1.3`) |
 | `WEIGHT_SUPPORT_COUNT` | `float` | `0.25` | Tidak | Bobot dukungan/upvote warga |
 | `WEIGHT_LOCATION_DENSITY` | `float` | `0.20` | Tidak | Bobot kepadatan laporan di wilayah |
@@ -297,16 +656,37 @@ Semua variabel dikonfigurasi melalui file `.env` (diload oleh Pydantic Settings)
 
 ## 🔀 Routing & URL Mapping (Dual-Prefix)
 
-Service ini mendaftarkan router secara **dual-prefix** untuk mendukung dua klien yang berbeda:
+Service mendaftarkan router secara **dual-prefix** untuk mendukung dua klien berbeda:
+
+```mermaid
+graph TD
+    Request["Incoming Request"] --> DualRouter{"Dual-Prefix\nRouter"}
+
+    DualRouter -->|"/v1/..."| Canonical["Canonical Prefix\nFormat: APIResponse envelope\nsuccess, data, error"]
+    DualRouter -->|"/api/v1/..."| NestJS["NestJS Compat Prefix\nFormat: sesuai kontrak\nNestJS service masing-masing"]
+
+    Canonical --> CanVerify["POST /v1/verify\nVerifyReportData"]
+    Canonical --> CanRisk["POST /v1/predict-risk\nPredictRiskData"]
+    Canonical --> CanZone["POST /v1/predict/zone-metrics\nPredictZoneMetricsData"]
+    Canonical --> CanPolicy["POST /v1/policy-simulate\nPolicySimulateData"]
+    Canonical --> Health["GET /health"]
+
+    NestJS -->|"Didaftarkan PERTAMA\nprioritas menang"| NestVerifyFlat["POST /api/v1/verify\nFlat response\nVerifyReportNestJSData"]
+    NestJS --> NestRisk["POST /api/v1/predict-risk\nEnvelope standard"]
+    NestJS --> NestZone["POST /api/v1/predict/zone-metrics\nFlat response"]
+    NestJS --> NestPolicy["POST /api/v1/policy-simulate\nEnvelope standard"]
+
+    style NestVerifyFlat fill:#FFF8E1,stroke:#F9A825
+    style Canonical fill:#E3F2FD,stroke:#1976D2
+    style NestJS fill:#E8F5E9,stroke:#34A853
+```
 
 | Klien | URL Prefix | Format Response | Keterangan |
 |---|---|---|---|
-| **Canonical / Langsung** | `/v1/...` | `{ success, data, error }` envelope standar | Untuk penggunaan langsung / testing |
-| **NestJS Backend** | `/api/v1/...` | Sesuai ekspektasi masing-masing service | Terintegrasi dengan `backend-laporkita` |
+| **Canonical / Testing** | `/v1/...` | `{ success, data, error }` envelope standar | Untuk penggunaan langsung & testing |
+| **NestJS Backend** | `/api/v1/...` | Sesuai kontrak masing-masing service | Terintegrasi dengan `backend-laporkita` |
 
-Pada prefix `/api/v1`, terdapat dua handler untuk `/verify`:
-- **`verify_compat_router`** (didaftarkan **pertama**): Mengembalikan response **flat** (tanpa envelope) sesuai ekspektasi `ai-verification.service.js` di NestJS — menang karena prioritas registrasi.
-- **`verification_router`**: Fallback dengan format envelope standar.
+> **Catatan Registrasi `/api/v1/verify`:** `verify_compat_router` didaftarkan **pertama** dan mengembalikan response **flat** tanpa envelope — menang karena prioritas registrasi router di FastAPI.
 
 ---
 
@@ -319,6 +699,18 @@ Mengecek status kesehatan server dan kesiapan operasional semua model ML di memo
 - **URL:** `GET http://localhost:8000/health`
 - **Auth:** Tidak diperlukan
 - **Response Model:** `APIResponse[HealthStatusData]`
+
+```mermaid
+stateDiagram-v2
+    [*] --> CheckYOLO : GET /health
+    CheckYOLO --> CheckXGB : YOLO loaded?
+    CheckXGB --> CheckGemini : XGBoost loaded?
+    CheckGemini --> Decision : API key configured?
+    Decision --> OK : All true
+    Decision --> Degraded : Any false
+    OK --> [*] : HTTP 200 status ok
+    Degraded --> [*] : HTTP 200 status degraded
+```
 
 #### Response (HTTP 200 OK — Semua Model Siap):
 ```json
@@ -362,18 +754,30 @@ Mengecek status kesehatan server dan kesiapan operasional semua model ML di memo
 Verifikasi laporan foto kerusakan fasilitas publik warga menggunakan YOLOv11-cls.
 
 - **URL (Canonical):** `POST http://localhost:8000/v1/verify`
-- **URL (Via NestJS proxy):** `POST http://localhost:8000/api/v1/verify` *(mengembalikan format berbeda, lihat endpoint #3)*
+- **URL (Via NestJS proxy):** `POST http://localhost:8000/api/v1/verify` *(format berbeda, lihat endpoint #3)*
 - **Content-Type:** `application/json`
 - **Response Model:** `APIResponse[VerifyReportData]`
 
 #### Pipeline Verifikasi (Rules.md §1.2):
-1. Validasi GPS → Apakah koordinat berada di dalam Bounding Box Kota Malang
-2. Validasi Timestamp → Apakah timestamp foto tidak anomali (terlalu lampau / masa depan)
-3. Inferensi YOLOv11-cls → Klasifikasi gambar ke 5 kelas
-4. Decision Rule:
-   - `confidence ≥ 0.6` **DAN** GPS valid **DAN** Timestamp valid → `is_valid: true, needs_manual_review: false`
-   - Salah satu gagal → `is_valid: false, needs_manual_review: true` (masuk antrean review operator, **bukan ditolak**)
-5. Hitung Smart Priority `urgency_score` (Rules.md §1.3)
+
+```mermaid
+flowchart LR
+    S1["1️⃣ Validasi GPS\nMalang BBox Check"]
+    S2["2️⃣ Validasi Timestamp\nAnomali Detection"]
+    S3["3️⃣ Inferensi YOLOv11\n5 kelas klasifikasi"]
+    S4["4️⃣ Decision Rule\nconfidence >= threshold"]
+    S5["5️⃣ Hitung urgency_score\nSmart Priority Formula"]
+
+    S1 --> S2 --> S3 --> S4 --> S5
+```
+
+1. **Validasi GPS** → Koordinat dalam Bounding Box Kota Malang
+2. **Validasi Timestamp** → Timestamp tidak anomali (terlalu lampau / masa depan)
+3. **Inferensi YOLOv11-cls** → Klasifikasi ke 5 kelas
+4. **Decision Rule:**
+   - `confidence >= 0.6` **DAN** GPS valid **DAN** Timestamp valid → `is_valid: true, needs_manual_review: false`
+   - Salah satu gagal → `is_valid: false, needs_manual_review: true` *(masuk antrean review operator, **bukan ditolak**)*
+5. **Hitung Smart Priority** `urgency_score` (Rules.md §1.3)
 
 #### Request Body:
 ```json
@@ -456,20 +860,7 @@ Verifikasi laporan foto kerusakan fasilitas publik warga menggunakan YOLOv11-cls
 }
 ```
 
-#### Response Error (HTTP 422 — Field Wajib Tidak Ada):
-```json
-{
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "latitude: Field required",
-    "details": [...]
-  }
-}
-```
-
-#### Keterangan Field `urgency_score`:
+#### Formula `urgency_score` (Smart Priority — Rules.md §1.3):
 
 ```
 urgency_score = (0.35 × damage_severity)
@@ -478,15 +869,15 @@ urgency_score = (0.35 × damage_severity)
               + (0.20 × category_urgency_weight)
 ```
 
-Nilai `category_urgency_weight` per kategori (default):
+Nilai `category_urgency_weight` per kategori:
 
-| Kategori | Bobot Urgensi |
-|---|---|
-| Jalan Berlubang | 0.90 |
-| Drainase | 0.85 |
-| Rambu Lalu Lintas | 0.80 |
-| Lampu Jalan | 0.70 |
-| Trotoar | 0.65 |
+| Kategori | Bobot Urgensi | Alasan |
+|---|---|---|
+| 🔴 Jalan Berlubang | **0.90** | Risiko kecelakaan langsung |
+| 🟠 Drainase | **0.85** | Risiko banjir dan genangan |
+| 🟡 Rambu Lalu Lintas | **0.80** | Risiko keselamatan lalu lintas |
+| 🟢 Lampu Jalan | **0.70** | Risiko keamanan malam hari |
+| 🔵 Trotoar | **0.65** | Risiko pejalan kaki |
 
 ---
 
@@ -498,7 +889,7 @@ Endpoint kompatibilitas khusus untuk `backend-laporkita` (NestJS). Menggunakan *
 - **Content-Type:** `application/json`
 - **Response Model:** `VerifyReportNestJSData` (flat, tanpa `success`/`error` wrapper)
 
-#### Request Body: (sama dengan endpoint canonical)
+#### Request Body:
 ```json
 {
   "photo_url": "https://storage.laporkita.id/reports/abc123.jpg",
@@ -526,7 +917,7 @@ Endpoint kompatibilitas khusus untuk `backend-laporkita` (NestJS). Menggunakan *
 
 ### 4. `POST /v1/predict-risk`
 
-Memprediksi probabilitas risiko genangan air dan tingkat stres wilayah menggunakan model XGBoost baseline.
+Memprediksi probabilitas risiko genangan air dan tingkat stres wilayah menggunakan XGBoost baseline.
 
 - **URL (Canonical):** `POST http://localhost:8000/v1/predict-risk`
 - **URL (NestJS):** `POST http://localhost:8000/api/v1/predict-risk`
@@ -551,8 +942,8 @@ Memprediksi probabilitas risiko genangan air dan tingkat stres wilayah menggunak
 | Field | Tipe | Wajib | Rentang | Deskripsi |
 |---|---|---|---|---|
 | `zone_id` | `string` | Tidak | — | UUID zona urban (ERD.md §2.11) |
-| `report_density` | `int` | Tidak (default: 0) | `≥ 0` | Jumlah laporan aktif di zona |
-| `weather_context.rainfall_mm` | `float` | Tidak (default: 0.0) | `≥ 0.0` | Curah hujan dalam milimeter |
+| `report_density` | `int` | Tidak (default: 0) | `>= 0` | Jumlah laporan aktif di zona |
+| `weather_context.rainfall_mm` | `float` | Tidak (default: 0.0) | `>= 0.0` | Curah hujan dalam milimeter |
 | `weather_context.temperature_c` | `float` | Tidak (default: 27.0) | — | Suhu ambient dalam Celsius |
 | `weather_context.drainage_issue_ratio` | `float` | Tidak (default: 0.2) | `0.0–1.0` | Rasio laporan drainase terhadap total laporan |
 | `traffic_density` | `float` | Tidak (default: 0.5) | `0.0–1.0` | Tingkat kemacetan ternormalisasi |
@@ -601,11 +992,21 @@ Memprediksi probabilitas risiko genangan air dan tingkat stres wilayah menggunak
 
 **Level Risiko:**
 
-| `flood_risk_probability` | `risk_level` / `predicted_stress_level` |
-|---|---|
-| `< 0.4` | `low` |
-| `0.4 – 0.7` | `medium` |
-| `> 0.7` | `high` |
+```mermaid
+graph LR
+    Prob["flood_risk_probability\n0.0 sampai 1.0"]
+    Low["🟢 LOW\n< 0.40\nPemantauan rutin"]
+    Medium["🟡 MEDIUM\n0.40 sampai 0.70\nSiaga pompa dan drainase"]
+    High["🔴 HIGH\n> 0.70\nWaspada mobilisasi DPUPR + Dishub"]
+
+    Prob --> Low
+    Prob --> Medium
+    Prob --> High
+
+    style Low fill:#E8F5E9,stroke:#34A853
+    style Medium fill:#FFF8E1,stroke:#F9A825
+    style High fill:#FFEBEE,stroke:#C62828
+```
 
 ---
 
@@ -738,14 +1139,16 @@ Mensimulasikan skenario intervensi kebijakan pemerintah kota menggunakan Google 
 
 Semua endpoint canonical (`/v1/...`) menggunakan format response envelope standar (`Rules.md §3`):
 
+**Success:**
 ```json
 {
   "success": true,
-  "data": { ... },
+  "data": { "..." },
   "error": null
 }
 ```
 
+**Error:**
 ```json
 {
   "success": false,
@@ -753,7 +1156,7 @@ Semua endpoint canonical (`/v1/...`) menggunakan format response envelope standa
   "error": {
     "code": "ERROR_CODE",
     "message": "Deskripsi error yang jelas",
-    "details": [ ... ]
+    "details": []
   }
 }
 ```
@@ -764,8 +1167,30 @@ Semua endpoint canonical (`/v1/...`) menggunakan format response envelope standa
 
 ## 🚨 Error Codes & HTTP Status Reference
 
+```mermaid
+graph TD
+    Request["Incoming Request"] --> Validate{"Pydantic\nValidation"}
+    Validate -->|"Field missing atau wrong type"| E422V["422 VALIDATION_ERROR"]
+    Validate -->|"Image decode fail"| E422I["422 INVALID_IMAGE"]
+    Validate -->|"Valid"| Process{"Process"}
+    Process -->|"Gemini JSON invalid"| E502["502 GEMINI_INVALID_RESPONSE"]
+    Process -->|"Gemini timeout > 20s"| E504["504 GEMINI_TIMEOUT"]
+    Process -->|"Unknown exception"| E500["500 INTERNAL_SERVER_ERROR"]
+    Process -->|"Endpoint not found"| E404["404 HTTP_404"]
+    Process -->|"Success"| E200["200 OK"]
+
+    style E200 fill:#E8F5E9,stroke:#34A853,color:#1B5E20
+    style E422V fill:#FFF8E1,stroke:#F9A825,color:#F57F17
+    style E422I fill:#FFF8E1,stroke:#F9A825,color:#F57F17
+    style E502 fill:#FFEBEE,stroke:#C62828,color:#B71C1C
+    style E504 fill:#FFEBEE,stroke:#C62828,color:#B71C1C
+    style E500 fill:#FFEBEE,stroke:#C62828,color:#B71C1C
+    style E404 fill:#F3E5F5,stroke:#7B1FA2,color:#4A148C
+```
+
 | HTTP Status | Error Code | Trigger |
 |---|---|---|
+| `200` | — | Sukses |
 | `422` | `VALIDATION_ERROR` | Field wajib tidak ada atau tipe data salah |
 | `422` | `INVALID_IMAGE` | Gambar tidak dapat dibaca (corrupt / base64 invalid) |
 | `502` | `GEMINI_INVALID_RESPONSE` | Gemini mengembalikan JSON tidak valid / gagal parse |
@@ -779,14 +1204,37 @@ Semua endpoint canonical (`/v1/...`) menggunakan format response envelope standa
 
 Rincian lengkap, URL verifikasi, dan analisis domain gap didokumentasikan di [`dataset_report.md`](dataset_report.md).
 
-| Kategori LaporKita | Nama Dataset Publik | URL Sumber | Lisensi | Total Clean | Train (70%) | Val (15%) | Test (15%) |
+```mermaid
+pie title Distribusi Dataset Training (1.796 Gambar)
+    "Drainase (381)" : 381
+    "Trotoar (420)" : 420
+    "Jalan Berlubang (340)" : 340
+    "Lampu Jalan (312)" : 312
+    "Rambu Lalu Lintas (343)" : 343
+```
+
+| Kategori LaporKita | Dataset Publik | Sumber | Lisensi | Clean | Train (70%) | Val (15%) | Test (15%) |
 |---|---|---|---|---|---|---|---|
-| **Jalan Berlubang** | Roboflow Pothole / RDD2022 subset | [HuggingFace: keremberke/pothole-segmentation](https://huggingface.co/datasets/keremberke/pothole-segmentation) | CC BY 4.0 | **486** | 340 | 72 | 74 |
-| **Trotoar** | METU Concrete Crack Images (CCIC) | [Mendeley Data: 5y9wdsg2zt.2](https://data.mendeley.com/datasets/5y9wdsg2zt/2) | CC BY 4.0 | **600** | 420 | 90 | 90 |
-| **Rambu Lalu Lintas** | German Traffic Sign Detection (GTSDB) | [HuggingFace: keremberke/german-traffic-sign-detection](https://huggingface.co/datasets/keremberke/german-traffic-sign-detection) | CC BY 4.0 | **491** | 343 | 73 | 75 |
-| **Lampu Jalan** | Team16 Street Light Dataset | [GitHub: Team16Project/Street-Light-Dataset](https://github.com/Team16Project/Street-Light-Dataset) | MIT | **447** | 312 | 67 | 68 |
-| **Drainase** | Manhole Covers & Storm Drains | [HuggingFace: delima87/manhole_covers_dataset](https://huggingface.co/datasets/delima87/manhole_covers_dataset) | CC BY 4.0 | **545** | 381 | 81 | 83 |
+| **🔴 Jalan Berlubang** | Roboflow Pothole / RDD2022 | [HuggingFace](https://huggingface.co/datasets/keremberke/pothole-segmentation) | CC BY 4.0 | **486** | 340 | 72 | 74 |
+| **🔵 Trotoar** | METU Concrete Crack Images (CCIC) | [Mendeley Data](https://data.mendeley.com/datasets/5y9wdsg2zt/2) | CC BY 4.0 | **600** | 420 | 90 | 90 |
+| **🟡 Rambu Lalu Lintas** | German Traffic Sign Detection (GTSDB) | [HuggingFace](https://huggingface.co/datasets/keremberke/german-traffic-sign-detection) | CC BY 4.0 | **491** | 343 | 73 | 75 |
+| **🟠 Lampu Jalan** | Team16 Street Light Dataset | [GitHub](https://github.com/Team16Project/Street-Light-Dataset) | MIT | **447** | 312 | 67 | 68 |
+| **🟤 Drainase** | Manhole Covers & Storm Drains | [HuggingFace](https://huggingface.co/datasets/delima87/manhole_covers_dataset) | CC BY 4.0 | **545** | 381 | 81 | 83 |
 | **TOTAL** | | | | **2.569** | **1.796** | **383** | **390** |
+
+**Stratified Split 70 / 15 / 15:**
+
+```mermaid
+graph LR
+    Raw["2.569 Gambar\nRaw Dataset"] -->|"Cleaning & Dedup"| Clean["2.569 Gambar Clean"]
+    Clean -->|"70%"| Train["Train Set\n1.796 gambar"]
+    Clean -->|"15%"| Val["Val Set\n383 gambar\nearly stopping"]
+    Clean -->|"15%"| Test["Test Set\n390 gambar\nheld-out evaluasi final"]
+
+    style Train fill:#E3F2FD,stroke:#1976D2
+    style Val fill:#FFF8E1,stroke:#F9A825
+    style Test fill:#E8F5E9,stroke:#34A853
+```
 
 ---
 
@@ -807,13 +1255,22 @@ Rincian lengkap, URL verifikasi, dan analisis domain gap didokumentasikan di [`d
 
 **Per-Class Precision / Recall / F1:**
 
-| Kategori Fasilitas | Precision | Recall | F1-Score | Support (Test Samples) |
+| Kategori Fasilitas | Precision | Recall | F1-Score | Support (Test) |
 |---|---|---|---|---|
 | **Drainase** | 0.9880 | 0.9880 | **0.9880** | 83 |
 | **Jalan Berlubang** | 1.0000 | 0.9865 | **0.9932** | 74 |
 | **Lampu Jalan** | 0.9855 | 1.0000 | **0.9927** | 68 |
 | **Rambu Lalu Lintas** | 1.0000 | 1.0000 | **1.0000** | 75 |
 | **Trotoar** | 1.0000 | 1.0000 | **1.0000** | 90 |
+| **Macro Average** | **0.9947** | **0.9949** | **0.9948** | **390** |
+
+```mermaid
+xychart-beta
+    title "Per-Class F1-Score YOLOv11-cls (%)"
+    x-axis ["Drainase", "Jalan Berlubang", "Lampu Jalan", "Rambu", "Trotoar"]
+    y-axis "F1-Score (%)" 98 --> 100.5
+    bar [98.80, 99.32, 99.27, 100.00, 100.00]
+```
 
 *Laporan evaluasi mendalam (confusion matrix, per-class error analysis, training curves) tersedia di [`training_report.md`](training_report.md).*
 
@@ -823,29 +1280,60 @@ Rincian lengkap, URL verifikasi, dan analisis domain gap didokumentasikan di [`d
 
 *Evaluasi pada 20% held-out dari total 6.000 sampel dataset sintetis hidrologi perkotaan.*
 
-| Metrik | Nilai |
-|---|---|
-| **R² Score** | **0.9635** |
-| **RMSE** | **0.0490** |
-| **MAE** | **0.0369** (rata-rata deviasi probabilitas ±3.69%) |
-| **Model Architecture** | `XGBRegressor` (`n_estimators=300, max_depth=6, learning_rate=0.05`) |
-| **Training Data** | 4.800 sampel sintetis (80% dari 6.000) |
+| Metrik | Nilai | Interpretasi |
+|---|---|---|
+| **R² Score** | **0.9635** | Model menjelaskan 96.35% variansi data |
+| **RMSE** | **0.0490** | Rata-rata deviasi probabilitas ±4.90% |
+| **MAE** | **0.0369** | Rata-rata deviasi probabilitas ±3.69% |
+| **Model Architecture** | `XGBRegressor` | `n_estimators=300, max_depth=6, learning_rate=0.05` |
+| **Training Data** | 4.800 sampel sintetis | 80% dari 6.000 sampel hidrologi |
+
+```mermaid
+xychart-beta
+    title "Performa XGBoost Risk Predictor"
+    x-axis ["R2 Score", "Precision (1-RMSE)", "Accuracy (1-MAE)"]
+    y-axis "Score" 0.8 --> 1.05
+    bar [0.9635, 0.9510, 0.9631]
+```
 
 ---
 
 ## 🏗️ Arsitektur Decision Log
 
-Berikut adalah keputusan teknis utama yang dibuat selama pengembangan:
+Keputusan teknis utama yang dibuat selama pengembangan:
+
+```mermaid
+timeline
+    title Fase Pengembangan LaporKita AI Service
+    section Fase 1 - Foundation
+        Desain microservice : FastAPI + Dual-prefix routing
+        Pydantic Settings : env-based configuration system
+    section Fase 2 - Dataset
+        Kurasi 5 dataset publik : 2.569 gambar CC BY 4.0 + MIT
+        Stratified 70/15/15 split : scripts/prepare_dataset.py
+    section Fase 3 - Computer Vision
+        Training YOLOv11n-cls : Transfer learning dari ImageNet
+        Evaluasi test set : 99.49% Top-1 Accuracy
+    section Fase 4 - Risk Prediction
+        Sintesis 6.000 sampel hidrologi : generate_synthetic_zone_data.py
+        Training XGBoost : R2 = 0.9635
+    section Fase 5 - LLM Integration
+        Integrasi Gemini 2.5 Flash : Structured JSON + Pydantic validation
+        Timeout handling : GEMINI_TIMEOUT 20s error code
+    section Fase 6 - Testing
+        21 unit tests : pytest asyncio semua passing
+        Live E2E tests : test_live_verification + test_live_gemini
+```
 
 | Keputusan | Pilihan | Alternatif Dipertimbangkan | Alasan |
 |---|---|---|---|
-| **Model klasifikasi** | `yolo11n-cls` (Nano) | CLIP, MobileNet, ResNet50 | Ekosistem Ultralytics mature, inference sangat cepat (~2ms), mudah di-retrain dengan foto lokal |
-| **Deployment model** | Model weights di-copy ke Docker image | Volume mount dari host | Container benar-benar mandiri (*self-contained*), tidak ada external dependency saat runtime |
-| **Dockerfile** | Single-stage dengan CPU PyTorch | Multi-stage build | Multi-stage gagal karena Docker Desktop memory limit saat download CUDA packages (>1GB); CPU PyTorch cukup untuk inference |
-| **Dataset strategi** | Public datasets + proxy visual | Scraping foto laporan lokal | Zero foto lapangan Kota Malang tersedia; proxy public datasets memungkinkan training dapat langsung dijalankan |
-| **Data historis XGBoost** | Sintetis (aturan hidrologi) | BMKG API + laporan DPUPR | Data historis riil belum tersedia; synthetic data cukup untuk demo dan memperlihatkan pola prediksi yang masuk akal |
-| **Dual-prefix routing** | `/v1/...` + `/api/v1/...` | Satu prefix saja | NestJS backend-laporkita memanggil `/api/v1/...`; prefix canonical `/v1/...` dipertahankan untuk backward compatibility dan testing |
-| **NestJS compat response** | Flat response schema terpisah (`VerifyReportNestJSData`) | Transform di NestJS | Menghindari parsing ganda di NestJS layer; AI Service bertanggung jawab penuh atas format yang dikonsumsinya |
+| **Model klasifikasi** | `yolo11n-cls` (Nano) | CLIP, MobileNet, ResNet50 | Ekosistem Ultralytics mature, inference ~2ms, mudah di-retrain dengan foto lokal |
+| **Deployment model** | Weights di-copy ke Docker image | Volume mount dari host | Container benar-benar mandiri (*self-contained*), tidak ada external dependency saat runtime |
+| **Dockerfile** | Single-stage CPU PyTorch | Multi-stage build | Multi-stage gagal karena Docker Desktop memory limit saat download CUDA packages (>1GB); CPU cukup untuk inference |
+| **Dataset strategi** | Public datasets + proxy visual | Scraping foto laporan lokal | Zero foto lapangan Kota Malang tersedia; proxy public datasets memungkinkan training langsung dijalankan |
+| **Data historis XGBoost** | Sintetis (aturan hidrologi) | BMKG API + laporan DPUPR | Data historis riil belum tersedia; synthetic data cukup untuk demo dengan pola prediksi yang masuk akal |
+| **Dual-prefix routing** | `/v1/...` + `/api/v1/...` | Satu prefix saja | NestJS backend memanggil `/api/v1/...`; prefix canonical `/v1/...` dipertahankan untuk backward compatibility dan testing |
+| **NestJS compat response** | Flat schema terpisah (`VerifyReportNestJSData`) | Transform di NestJS | Menghindari parsing ganda di NestJS layer; AI Service bertanggung jawab penuh atas format yang dikonsumsinya |
 
 ---
 
@@ -855,12 +1343,25 @@ Untuk keterbukaan teknis (*technical honesty*) sebelum deployment ke production 
 
 ### 1. Domain Shift — Zero Field Validation Kota Malang
 
-Model YOLOv11 dievaluasi pada held-out test set dari dataset publik (akurasi 99.49%). **Belum ada validasi dengan foto lapangan warga asli Kota Malang.** Performa aktual di lapangan dapat terpengaruh oleh:
-- Sudut pengambilan foto yang tidak ideal (foto dari jarak jauh, sudut miring)
-- Kamera ponsel resolusi rendah atau kondisi pencahayaan ekstrem (malam hari, backlight)
-- Tampilan fisik kerusakan infrastruktur lokal yang berbeda dari dataset publik internasional
+```mermaid
+graph LR
+    TrainData["Training Data\nDataset Publik Internasional"]
+    FieldData["Field Data\nFoto Warga Malang"]
+    Gap["⚠️ DOMAIN GAP\nSudut foto tidak ideal\nKamera resolusi rendah\nPencahayaan ekstrem\nTampilan fisik berbeda"]
 
-**Rekomendasi:** Lakukan labeling 200–500 foto lapangan warga Malang per kategori dan fine-tune model sebelum production launch.
+    TrainData -->|"99.49% Test Acc"| ModelPerf["Model Performance\npada test set publik"]
+    FieldData --> Gap --> ActualPerf["Performa Aktual\nBELUM DIVALIDASI"]
+    ModelPerf -.->|"Mungkin berbeda signifikan"| ActualPerf
+
+    style Gap fill:#FFEBEE,stroke:#C62828,color:#B71C1C
+    style ActualPerf fill:#FFF8E1,stroke:#F9A825,color:#F57F17
+```
+
+Model YOLOv11 dievaluasi pada held-out test set dari dataset publik (akurasi 99.49%). **Belum ada validasi dengan foto lapangan warga asli Kota Malang.**
+
+> **Rekomendasi:** Lakukan labeling **200–500 foto lapangan warga Malang per kategori** dan fine-tune model sebelum production launch.
+
+---
 
 ### 2. Kategori Proxy Visual
 
@@ -870,12 +1371,26 @@ Model YOLOv11 dievaluasi pada held-out test set dari dataset publik (akurasi 99.
 | **Drainase** | Manhole covers & grill saluran air | Belum mencakup parit terbuka, selokan batu bata, saluran lahan sawah |
 | **Rambu Lalu Lintas** | GTSDB (standar Eropa) | Piktogram minor berbeda dari rambu Dishub/Kemenhub RI |
 
+---
+
 ### 3. Data Historis XGBoost Sintetis
 
 Model XGBoost dilatih pada **6.000 sampel sintetis** yang dihasilkan berdasarkan aturan hidrologi perkotaan logistik (`scripts/generate_synthetic_zone_data.py`). Dataset ini **BUKAN data observasi riil**.
 
 > **WAJIB di-retrain** dengan data historis riil (deret waktu curah hujan stasiun BMKG Karangploso + log penanganan fisik DPUPR Kota Malang) sebelum digunakan untuk pengambilan keputusan anggaran atau kebijakan publik yang sesungguhnya.
 
+---
+
 ### 4. Metrik `damage_severity` sebagai Proxy
 
 Nilai `damage_severity` (0.0–1.0) adalah **estimasi terkalibrasi** dari confidence model klasifikasi dan bobot urgensi kelas per kategori. Ini **bukan pengukuran langsung** luas fisik kerusakan per meter persegi. Untuk kuantifikasi kerusakan yang akurat, diperlukan model segmentasi (SAM/Mask R-CNN) atau survei fisik lapangan.
+
+---
+
+<div align="center">
+
+**LaporKita AI Service** — Powered by YOLOv11, XGBoost & Google Gemini 2.5 Flash
+
+*Built for Kota Malang · MAGEITS Competition 2026*
+
+</div>
