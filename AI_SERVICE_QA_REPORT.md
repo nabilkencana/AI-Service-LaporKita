@@ -794,5 +794,39 @@ Data uji (users/reports/categories) sudah dibersihkan dari DB.
 - Status: **INTEGRASI E2E TERVERIFIKASI** — klaim READY kini didukung bukti
   end-to-end (dengan catatan rotate key di atas).
 
+---
+
+# 15. Rotasi Key & Status Final Bersih (Hermes)
+
+> Rotasi `INTERNAL_API_KEY` dilakukan 2026-08-23 karena nilai key sempat
+> tercantum di dokumen tracked yang telah di-push (section 12).
+
+## 15.1 Eksekusi Rotasi
+
+1. Key baru digenerate (`laporkita-<hex>` 42 char) dan dipasang di:
+   - `ai-service/.env` + `.env.example`
+   - `backend-laporkita/.env` (backend memuat via `env_file`)
+2. Container `laporkita-ai-service` di-recreate → key baru aktif
+3. Container `laporkita_app` di-recreate → env baru terbaca
+4. Verifikasi:
+   - Key LAMA → **HTTP 403** (ditolak)
+   - Key BARU → **HTTP 200**
+   - `/health` → 200, `llm_connected: true`
+   - E2E ulang (gateway → tunnel → ai-service): **`POST /api/v1/verify → 200 OK`**
+     dengan key baru — rantai autentikasi penuh bekerja
+
+## 15.2 Status Final
+
+- **AI Service:** READY — model 6 kelas (99.56%, Wilson CI 98.42–99.88%),
+  auth aktif (401/403/200), DeepSeek live, OOD/blur guard, SEC-SIZE/SSRF,
+  urgency_score dihapus, 35/35 test
+- **Gateway NestJS:** terintegrasi — header `X-API-Key` (env-only, tanpa
+  hardcode), E2E via URL publik terverifikasi 200
+- **Repo:** `ai-service` & `backend-laporkita` — working tree bersih, semua
+  commit ter-push
+- **Key internal:** dirotasi; nilai baru hanya ada di `.env` (gitignored)
+
+**KESIMPULAN AKHIR: SEMUA TEMUAN QA (Round 1–3) TERTUTUP. STATUS: READY.**
+
 
 
