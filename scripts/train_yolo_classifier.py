@@ -28,7 +28,26 @@ CLASSES = [
     "Lampu Jalan",
     "Rambu Lalu Lintas",
     "Trotoar",
+    "bukan_fasilitas",
 ]
+
+
+def wilson_score_interval(k: int, n: int, confidence: float = 0.95) -> dict:
+    """Calculates Wilson score 95% confidence interval for a proportion."""
+    if n == 0:
+        return {"low": 0.0, "high": 0.0, "ci_str": "0.00% - 0.00%"}
+    z = 1.95996  # 95% confidence
+    p = k / n
+    denom = 1 + (z**2) / n
+    center = (p + (z**2) / (2 * n)) / denom
+    spread = (z * np.sqrt((p * (1 - p) + (z**2) / (4 * n)) / n)) / denom
+    low = max(0.0, float(center - spread))
+    high = min(1.0, float(center + spread))
+    return {
+        "low": round(low, 4),
+        "high": round(high, 4),
+        "ci_str": f"{low * 100:.2f}% - {high * 100:.2f}%",
+    }
 
 
 def train_classifier():
@@ -48,13 +67,16 @@ def train_classifier():
     # Initialize YOLOv11-cls pretrained model
     model = YOLO("yolo11n-cls.pt")
 
-    # Train model
+    # Train model with data augmentation (including rotation & flip for MODEL-ROT fix)
     print(f"Starting training on {DATASET_DIR.resolve()}...")
     results = model.train(
         data=str(DATASET_DIR.resolve()),
-        epochs=15,
+        epochs=20,
         imgsz=224,
         batch=32,
+        degrees=180.0,
+        fliplr=0.5,
+        flipud=0.5,
         device=device,
         project=str(BASE_DIR / "runs" / "classify"),
         name="laporkita_yolo11_cls",
@@ -133,8 +155,12 @@ def evaluate_on_test_set(weight_path: Path):
         print(f"{CLASSES[idx]:<20} | {row_str}")
 
     # Prepare metrics dictionary
+    overall_correct = sum(1 for yt, yp in zip(y_true, y_pred) if yt == yp)
+    acc_ci = wilson_score_interval(overall_correct, len(y_true))
+
     metrics_summary = {
         "overall_accuracy": round(float(overall_acc), 4),
+        "overall_accuracy_ci_95": acc_ci,
         "total_test_samples": len(y_true),
         "mean_confidence": round(float(np.mean(confidences)), 4),
         "per_class": {
@@ -143,6 +169,10 @@ def evaluate_on_test_set(weight_path: Path):
                 "recall": round(float(cls_report[cls]["recall"]), 4),
                 "f1_score": round(float(cls_report[cls]["f1-score"]), 4),
                 "support": int(cls_report[cls]["support"]),
+                "recall_ci_95": wilson_score_interval(
+                    sum(1 for yt, yp in zip(y_true, y_pred) if yt == cls and yp == cls),
+                    int(cls_report[cls]["support"])
+                ),
             }
             for cls in CLASSES if cls in cls_report
         },

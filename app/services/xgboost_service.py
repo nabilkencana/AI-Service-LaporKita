@@ -86,15 +86,16 @@ class XGBoostRiskService:
         }
         df_feat = pd.DataFrame(feature_dict)
 
-        if self.model is not None:
-            try:
-                pred_prob = float(self.model.predict(df_feat)[0])
-                flood_risk_prob = round(float(np.clip(pred_prob, 0.01, 0.99)), 4)
-            except Exception as e:
-                logger.warning(f"Inference error with XGBoost model: {e}. Using fallback heuristic.")
-                flood_risk_prob = self._heuristic_fallback(rainfall_mm, report_density, traffic_density)
-        else:
-            flood_risk_prob = self._heuristic_fallback(rainfall_mm, report_density, traffic_density)
+        if self.model is None:
+            logger.error("XGBoost model is not loaded in memory")
+            raise RuntimeError("Model prediksi risiko XGBoost tidak tersedia atau gagal dimuat")
+
+        try:
+            pred_prob = float(self.model.predict(df_feat)[0])
+            flood_risk_prob = round(float(np.clip(pred_prob, 0.01, 0.99)), 4)
+        except Exception as e:
+            logger.error(f"Inference error with XGBoost model: {e}")
+            raise RuntimeError(f"Gagal melakukan inferensi model XGBoost: {e}") from e
 
         # 1. Determine Risk Level (ERD.md §2.12)
         if flood_risk_prob >= 0.70:

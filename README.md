@@ -5,11 +5,11 @@
 <p align="center">
   <img src="https://img.shields.io/badge/FastAPI-0.110%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/YOLOv11--cls-99.49%25%20Acc-FF6B35?style=for-the-badge&logo=pytorch&logoColor=white" />
+  <img src="https://img.shields.io/badge/YOLOv11--cls-99.23%25%20Acc-FF6B35?style=for-the-badge&logo=pytorch&logoColor=white" />
   <img src="https://img.shields.io/badge/XGBoost-R²%3D0.9635-F7931E?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Gemini%202.5%20Flash-LLM-4285F4?style=for-the-badge&logo=google&logoColor=white" />
+  <img src="https://img.shields.io/badge/DeepSeek%20API-LLM-0066FF?style=for-the-badge&logo=deepseek&logoColor=white" />
   <img src="https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
-  <img src="https://img.shields.io/badge/Tests-21%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tests-32%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white" />
 </p>
 
 > **Microservice Python FastAPI** mandiri untuk platform **LaporKita** — platform pelaporan kerusakan infrastruktur publik **Kota Malang** berbasis AI.
@@ -37,11 +37,12 @@
 - [🔀 Routing & URL Mapping](#-routing--url-mapping-dual-prefix)
 - [📡 Dokumentasi Lengkap Semua Endpoint](#-dokumentasi-lengkap-semua-endpoint)
   - [GET /health](#1-get-health)
-  - [POST /v1/verify — Canonical](#2-post-v1verify--canonical-envelope)
-  - [POST /api/v1/verify — NestJS Compat](#3-post-apiv1verify--nestjs-compat-flat)
-  - [POST /v1/predict-risk](#4-post-v1predict-risk)
-  - [POST /v1/predict/zone-metrics](#5-post-v1predictzone-metrics--nestjs-compat)
-  - [POST /v1/policy-simulate](#6-post-v1policy-simulate)
+  - [GET /demo & GET / — Interactive Web Console](#2-get-demo--get----interactive-web-console)
+  - [POST /v1/verify — Canonical](#3-post-v1verify--canonical-envelope)
+  - [POST /api/v1/verify — NestJS Compat](#4-post-apiv1verify--nestjs-compat-flat)
+  - [POST /v1/predict-risk](#5-post-v1predict-risk)
+  - [POST /v1/predict/zone-metrics](#6-post-v1predictzone-metrics--nestjs-compat)
+  - [POST /v1/policy-simulate](#7-post-v1policy-simulate)
 - [📐 Format Response Envelope](#-format-response-envelope-standar)
 - [🚨 Error Codes & HTTP Status Reference](#-error-codes--http-status-reference)
 - [📊 Dataset & Training](#-ringkasan-dataset-publik-5-kategori)
@@ -82,9 +83,9 @@ graph LR
 
 | # | Fitur | Model | Performa |
 |---|---|---|---|
-| 1 | 🔍 **AI Verification** | YOLOv11-cls (Computer Vision) | 99.49% Test Accuracy, ~2.1ms/image |
-| 2 | 📊 **Urban Risk Prediction** | XGBoost Regressor | R² = 0.9635, RMSE = 0.0490 |
-| 3 | 🧬 **Policy Simulator** | Google Gemini 2.5 Flash (LLM) | Structured JSON output, 20s timeout |
+| 1 | 🔍 **AI Verification** | YOLOv11-cls (Computer Vision) | 99.23% Test Accuracy (Leak-Free Split) |
+| 2 | 📊 **Urban Risk Prediction** | XGBoost Regressor | R² = 0.9635, RMSE = 0.0490 (Baseline Sintetis) |
+| 3 | 🧬 **Policy Simulator** | DeepSeek API (LLM) | Structured JSON output, 20s timeout |
 
 ---
 
@@ -117,9 +118,9 @@ graph TB
         end
 
         subgraph Services["Services Layer"]
-            YOLOSvc["YOLOService\n(Singleton, Lazy-Loaded)"]
+            YOLOSvc["YOLOService\n(Singleton, Thread-Safe)"]
             XGBSvc["XGBoostService\n(Singleton, Lazy-Loaded)"]
-            GeminiSvc["GeminiService\n(20s Timeout)"]
+            LLMSvc["DeepSeekService\n(20s Timeout, Injection Guard)"]
         end
 
         subgraph Utils["Utils Layer"]
@@ -150,10 +151,11 @@ graph TB
     Verify --> GPS
     Verify --> Scoring
     Risk --> XGBSvc
-    Policy --> GeminiSvc
+    Policy --> LLMSvc
 
     YOLOSvc --> YOLO
     XGBSvc --> XGB
+    LLMSvc --> DeepSeek
 
     Gateway --> PG
     Gateway --> Redis
@@ -174,9 +176,9 @@ sequenceDiagram
     participant Flutter as 📱 Flutter App
     participant NestJS as 🖥️ NestJS Backend
     participant FastAPI as 🤖 FastAPI AI Service
-    participant YOLO as 🧠 YOLOv11
+    participant YOLO as 🧠 YOLOv11-cls
     participant XGB as 📊 XGBoost
-    participant Gemini as ✨ Gemini 2.5 Flash
+    participant DeepSeek as 🤖 DeepSeek API
     participant DB as 🗄️ PostgreSQL
 
     Warga->>Flutter: Foto + GPS + Kategori
@@ -185,10 +187,10 @@ sequenceDiagram
 
     FastAPI->>FastAPI: Validasi GPS (Malang BBox)
     FastAPI->>FastAPI: Validasi Timestamp
-    FastAPI->>YOLO: Inferensi klasifikasi 5 kelas
-    YOLO-->>FastAPI: class_probabilities + confidence
-    FastAPI->>FastAPI: Hitung urgency_score
-    FastAPI-->>NestJS: confidence, category, is_valid, urgency_score
+    FastAPI->>YOLO: Inferensi klasifikasi 5 kelas (Non-blocking thread)
+    YOLO-->>FastAPI: class_probabilities + confidence + severity
+    FastAPI->>FastAPI: Hitung smart_priority_score
+    FastAPI-->>NestJS: confidence, category, is_valid, smart_priority_score
 
     NestJS->>DB: Simpan laporan + skor
     NestJS-->>Flutter: Report ID + status
@@ -201,8 +203,8 @@ sequenceDiagram
 
     Note over NestJS, FastAPI: Opsional — Policy Simulation
     NestJS->>FastAPI: POST /api/v1/policy-simulate
-    FastAPI->>Gemini: Structured JSON prompt
-    Gemini-->>FastAPI: Narasi + projected_data
+    FastAPI->>DeepSeek: Structured JSON prompt (Strict Injection Guard)
+    DeepSeek-->>FastAPI: Narasi + projected_data (Redacted & Schema Enforced)
     FastAPI-->>NestJS: result_narrative + key_recommendations
 
     NestJS->>DB: Update zone risk metrics
@@ -306,27 +308,30 @@ flowchart LR
 sequenceDiagram
     participant Client as 🖥️ NestJS / Client
     participant Router as 🔀 FastAPI Router
-    participant Gemini as ✨ Gemini 2.5 Flash API
-    participant Pydantic as 🛡️ Pydantic Validator
+    participant DeepSeek as 🤖 DeepSeek API
+    participant Guard as 🛡️ Prompt Guard & Pydantic
 
-    Client->>Router: POST /v1/policy-simulate prompt_text, zone_id, time_horizon_months, parameters
-    Router->>Router: Validate input (5 to 2000 chars)
+    Client->>Router: POST /v1/policy-simulate (prompt_text, zone_id, time_horizon)
+    Router->>Router: Validasi panjang input (5 s.d. 2000 karakter)
 
-    Router->>Gemini: Structured JSON prompt max 20s timeout
-
-    alt Berhasil kurang dari 20 detik
-        Gemini-->>Router: Raw JSON response
-        Router->>Pydantic: Validate PolicyProjectionData schema
-        alt JSON valid
-            Pydantic-->>Router: Parsed PolicySimulateData
-            Router-->>Client: 200 OK result_narrative, result_data, key_recommendations
-        else JSON invalid
-            Pydantic-->>Router: ValidationError
-            Router-->>Client: 502 GEMINI_INVALID_RESPONSE
+    alt API Key Tidak Dikonfigurasi
+        Router-->>Client: 503 LLM_KEY_NOT_CONFIGURED
+    else API Key Valid
+        Router->>DeepSeek: Structured JSON request (deepseek-chat, max 20s timeout)
+        alt Berhasil kurang dari 20 detik
+            DeepSeek-->>Router: Raw JSON response
+            Router->>Guard: Sanitasi Keyword Injeksi & Validasi Pydantic
+            alt Format & Skema Valid
+                Guard-->>Router: Parsed PolicySimulateData
+                Router-->>Client: 200 OK (narrative, result_data, recommendations)
+            else Format Tidak Valid
+                Guard-->>Router: ValidationError / JSONDecodeError
+                Router-->>Client: 502 LLM_INVALID_RESPONSE
+            end
+        else Timeout lebih dari 20 detik
+            DeepSeek-->>Router: TimeoutException
+            Router-->>Client: 504 LLM_TIMEOUT
         end
-    else Timeout lebih dari atau sama dengan 20 detik
-        Gemini-->>Router: TimeoutError
-        Router-->>Client: 504 GEMINI_TIMEOUT
     end
 ```
 
@@ -340,40 +345,43 @@ graph LR
         FastAPI["FastAPI >= 0.110\nASGI + OpenAPI"]
         Uvicorn["Uvicorn >= 0.28\nuvloop ASGI"]
         Pydantic["Pydantic v2 >= 2.6\nValidation + Settings"]
+        Console["Web Console (HTML5/JS)\nindex.html at /demo"]
     end
 
     subgraph AI["🧠 AI/ML Layer"]
-        YOLO["Ultralytics >= 8.3\nYOLOv11-cls"]
-        XGB["XGBoost >= 2.0\nXGBRegressor"]
-        Gemini["google-genai >= 1.0\nGemini 2.5 Flash"]
+        YOLO["Ultralytics >= 8.3\nYOLOv11-cls (3.0 MB)"]
+        XGB["XGBoost >= 2.0\nXGBRegressor (497 KB)"]
+        DeepSeek["DeepSeek API\ndeepseek-chat via httpx"]
         PIL["Pillow >= 10.0\nImage Processing"]
         Pandas["Pandas >= 2.0\n+ NumPy >= 1.24\nFeature Matrix"]
     end
 
     subgraph Infra["☁️ Infrastructure"]
-        Docker["Docker + Compose\nSelf-Contained"]
-        PG["PostgreSQL\n+ PostGIS"]
-        Redis["Redis"]
-        Minio["MinIO"]
+        Docker["Docker + Compose\nSelf-Contained (3.5 MB weights)"]
+        Sec["Security Layer\nSSRF & 8MB Guard"]
     end
 
     FastAPI --> YOLO
     FastAPI --> XGB
-    FastAPI --> Gemini
+    FastAPI --> DeepSeek
+    FastAPI --> Console
     Uvicorn --> FastAPI
     Pydantic --> FastAPI
     YOLO --> PIL
     XGB --> Pandas
     Docker --> FastAPI
+    Sec --> FastAPI
 ```
 
 | Layer | Teknologi | Versi | Peran |
 |---|---|---|---|
 | Web Framework | **FastAPI** | `>=0.110.0` | ASGI routing, Pydantic validation, OpenAPI docs |
 | ASGI Server | **Uvicorn** | `>=0.28.0` | Production ASGI server with uvloop |
+| Interactive Console | **Vanilla JS + HTML5** | Modern Web | Interactive Console di `GET /` & `GET /demo` |
 | Computer Vision | **Ultralytics YOLOv11** | `>=8.3.0` | Image classification (5-class, `-cls` mode) |
 | ML Baseline | **XGBoost** | `>=2.0.0` | Risk regression (`XGBRegressor`) |
-| LLM | **Google Gemini 2.5 Flash** | via `google-genai>=1.0.0` | Structured JSON policy simulation |
+| LLM | **DeepSeek API** | `deepseek-chat` via `httpx` | Structured JSON policy simulation with injection guard |
+| Async HTTP Client | **HTTPX** | `>=0.27.0` | Non-blocking async client for DeepSeek API |
 | Image Processing | **Pillow** | `>=10.0.0` | Base64 decode, URL fetch, YOLO pre-processing |
 | Data Processing | **Pandas + NumPy** | `>=2.0.0 / >=1.24.0` | XGBoost feature matrix |
 | Validation | **Pydantic v2** | `>=2.6.0` | Schema + settings validation |
@@ -401,41 +409,43 @@ ai-service/
 │   │   ├── prediction.py           # PredictRiskRequest/Data, PredictZoneMetricsRequest/Data
 │   │   └── policy_simulator.py     # PolicySimulateRequest, PolicySimulateData, PolicyProjectionData
 │   ├── services/
-│   │   ├── yolo_service.py         # Singleton YOLOv11 classifier (lazy-loaded at startup)
+│   │   ├── yolo_service.py         # Singleton YOLOv11 classifier (thread-safe, pre-warmed)
 │   │   ├── xgboost_service.py      # Singleton XGBoost risk predictor
-│   │   └── gemini_service.py       # Gemini 2.5 Flash with 20s timeout + Pydantic validation
+│   │   ├── deepseek_service.py     # DeepSeek LLM service with prompt injection guard
+│   │   └── gemini_service.py       # Fallback LLM interface
 │   ├── utils/
-│   │   ├── gps_validator.py        # Malang bbox check + timestamp anomaly detection
-│   │   └── scoring.py              # Smart Priority urgency score calculation
-│   └── main.py                     # FastAPI app, lifespan, global error handlers, router mounting
+│   │   ├── security.py             # SSRF protection, IP resolver blocker, image validator
+│   │   ├── gps_validator.py        # Malang bbox check + timestamp validation
+│   │   └── scoring.py              # Smart Priority score calculation (Rules.md §1.3)
+│   └── main.py                     # FastAPI app, lifespan, global error handlers, demo router
 │
+├── index.html                      # Interactive Web Console (Live Testing UI)
+├── LIMITATIONS.md                  # Laporan batasan teknis ilmiah & kejujuran domain
+├── training_report.md              # Metrik evaluasi riil YOLOv11 (99.23% leak-free test accuracy)
 ├── models/
-│   ├── yolov11-cls-laporkita.pt    # Trained YOLOv11-cls model weights (5 classes, ~5.5MB)
-│   └── xgboost-flood-risk.json     # Trained XGBoost regressor weights
+│   ├── yolov11-cls-laporkita.pt    # Trained YOLOv11-cls model weights (5 classes, 3.0 MB)
+│   └── xgboost-flood-risk.json     # Trained XGBoost regressor weights (497 KB)
 │
 ├── scripts/
-│   ├── download_datasets.py        # Fase 2: dataset acquisition dari sumber publik
-│   ├── prepare_dataset.py          # Fase 2: cleaning, stratified 70/15/15 split
-│   ├── train_yolo_classifier.py    # Fase 3: training YOLOv11-cls + confusion matrix
-│   ├── generate_synthetic_zone_data.py  # Fase 4: synthetic dataset 6.000 sampel hidrologi
-│   ├── train_xgboost_model.py      # Fase 4: training XGBoost + evaluasi
-│   ├── test_live_verification.py   # Fase 6: live E2E test semua 5 kelas
-│   └── test_live_gemini_policy.py  # Fase 6: live E2E test Gemini API
+│   ├── rebuild_clean_dataset.py    # dHash <=8 clustering & video-grouping (LEAK-1 fix)
+│   ├── train_yolo_classifier.py    # Training YOLOv11-cls + 180° rotation augmentation
+│   ├── generate_synthetic_zone_data.py  # Synthetic dataset 6.000 sampel hidrologi
+│   └── train_xgboost_model.py      # Training XGBoost + evaluasi
 │
 ├── tests/
 │   ├── test_health.py              # Health check + model readiness verification
-│   ├── test_verification.py        # 6 test cases: 5 kelas, GPS anomali, timestamp, corrupt image
-│   ├── test_prediction.py          # 3 test cases: stress rendah/tinggi, invalid input
-│   ├── test_policy_simulator.py    # 4 test cases: sukses, malformed JSON, timeout, validasi input
+│   ├── test_verification.py        # 9 test cases: 5 kelas, GPS, timestamp, category validation, fail-closed
+│   ├── test_prediction.py          # 4 test cases: stress rendah/tinggi, boundary, fail-closed
+│   ├── test_security.py            # 5 test cases: SSRF loopback/metadata, path traversal, >8MB size, concurrency
+│   ├── test_policy_simulator.py    # 6 test cases: DeepSeek mock, 502 parse, 504 timeout, 503 key, injection guard
 │   └── test_utils.py               # 7 test cases: GPS bbox, timestamp edge cases, scoring formula
 │
 ├── dataset/
-│   ├── train/                      # 1.796 gambar (70%), dibagi per kelas
-│   ├── val/                        # 383 gambar (15%), dibagi per kelas
-│   └── test/                       # 390 gambar (15%), dibagi per kelas
+│   ├── train/                      # 1.796 gambar (70%), leak-free split
+│   ├── val/                        # 383 gambar (15%), early stopping
+│   └── test/                       # 390 gambar (15%), held-out final evaluation
 │
 ├── dataset_report.md               # Dokumentasi lengkap sumber dataset, lisensi, distribusi
-├── training_report.md              # Metrik evaluasi riil YOLOv11 (99.49% test set accuracy)
 ├── Architecture.md                 # Arsitektur teknis detail
 ├── Design.md                       # Design decisions & patterns
 ├── ERD.md                          # Entity Relationship Diagram
@@ -503,18 +513,19 @@ pip install -r requirements.txt
 
 # 4. Buat file .env dari template
 cp .env.example .env
-# Edit .env dan isi GEMINI_API_KEY dengan API key dari https://aistudio.google.com
+# Edit .env dan isi DEEPSEEK_API_KEY dengan API key dari https://platform.deepseek.com
 
-# 5. Jalankan unit test (21 tests, seharusnya semua pass)
+# 5. Jalankan unit test (32 tests, 100% passing)
 pytest -v
 
 # 6. Jalankan server FastAPI
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-> **⚠️ Perhatian:** Gunakan `app.main:app` (bukan `main:app`). Service memerlukan model weights di `models/yolov11-cls-laporkita.pt` dan `models/xgboost-flood-risk.json`.
+> **⚠️ Perhatian:** Gunakan `app.main:app` (bukan `main:app`). Service memerlukan model weights di `models/yolov11-cls-laporkita.pt` (3.0 MB) dan `models/xgboost-flood-risk.json` (497 KB).
 
 Setelah server aktif, buka:
+- **Interactive Web Console (Demo UI):** `http://localhost:8000/demo` atau `http://localhost:8000/`
 - **Swagger UI (Interaktif):** `http://localhost:8000/docs`
 - **ReDoc (Dokumentasi):** `http://localhost:8000/redoc`
 - **OpenAPI JSON Schema:** `http://localhost:8000/openapi.json`
@@ -570,7 +581,7 @@ docker build -t laporkita-ai-service:1.0.0 .
 docker run -d \
   --name laporkita-ai-service \
   -p 8000:8000 \
-  -e GEMINI_API_KEY=your_api_key_here \
+  -e DEEPSEEK_API_KEY=your_api_key_here \
   laporkita-ai-service:1.0.0
 ```
 
@@ -616,8 +627,7 @@ Semua variabel dikonfigurasi melalui file `.env` (diload oleh Pydantic Settings 
 graph LR
     ENV[".env file"] --> PS["Pydantic Settings\ncore/config.py"]
     PS --> App["APP_NAME\nAPP_ENV\nPORT\nHOST\nLOG_LEVEL"]
-    PS --> ModelPaths["Model Paths\nCLASSIFICATION_MODEL_PATH\nXGBOOST_MODEL_PATH"]
-    PS --> GeminiConf["Gemini Config\nGEMINI_API_KEY\nGEMINI_MODEL_NAME"]
+    PS --> LLMConf["DeepSeek Config\nDEEPSEEK_API_KEY\nDEEPSEEK_MODEL_NAME"]
     PS --> Thresh["AI Thresholds\nAI_CONFIDENCE_THRESHOLD"]
     PS --> BBox["Malang BBox\nMALANG_BBOX_MIN_LAT\nMALANG_BBOX_MAX_LAT\nMALANG_BBOX_MIN_LON\nMALANG_BBOX_MAX_LON"]
     PS --> Weights["Priority Weights\nWEIGHT_DAMAGE_SEVERITY\nWEIGHT_SUPPORT_COUNT\nWEIGHT_LOCATION_DENSITY\nWEIGHT_CATEGORY_URGENCY"]
@@ -636,8 +646,12 @@ graph LR
 | **— Model Paths —** | | | | |
 | `CLASSIFICATION_MODEL_PATH` | `string` | `models/yolov11-cls-laporkita.pt` | **Ya** | Path ke file weights YOLOv11 |
 | `XGBOOST_MODEL_PATH` | `string` | `models/xgboost-flood-risk.json` | **Ya** | Path ke file model XGBoost |
-| **— Gemini LLM —** | | | | |
-| `GEMINI_API_KEY` | `string` | `""` | **Ya** | API Key Google Gemini (dari [Google AI Studio](https://aistudio.google.com)) |
+| **— DeepSeek LLM (Primary) —** | | | | |
+| `DEEPSEEK_API_KEY` | `string` | `""` | **Ya** | API Key DeepSeek (dari [DeepSeek Platform](https://platform.deepseek.com)) |
+| `DEEPSEEK_BASE_URL` | `string` | `https://api.deepseek.com` | Tidak | Base URL endpoint DeepSeek API |
+| `DEEPSEEK_MODEL_NAME` | `string` | `deepseek-chat` | Tidak | Identifier model DeepSeek (default: `deepseek-chat`) |
+| **— Gemini LLM (Optional Fallback) —** | | | | |
+| `GEMINI_API_KEY` | `string` | `""` | Tidak | API Key Google Gemini (opsional) |
 | `GEMINI_MODEL_NAME` | `string` | `gemini-2.5-flash` | Tidak | Identifier model Gemini |
 | **— AI Verification Thresholds —** | | | | |
 | `AI_CONFIDENCE_THRESHOLD` | `float` | `0.6` | Tidak | Ambang batas minimum confidence untuk auto-approve (`Rules.md §1.2`) |
@@ -749,7 +763,21 @@ stateDiagram-v2
 
 ---
 
-### 2. `POST /v1/verify` — Canonical (envelope)
+### 2. `GET /demo` & `GET /` — Interactive Web Console
+
+Antarmuka pengujian visual web interaktif (*glassmorphism UI*) untuk menguji verifikasi citra YOLOv11-cls, prediksi risiko XGBoost, dan simulasi kebijakan DeepSeek LLM secara langsung di browser tanpa Postman.
+
+- **URL:** `GET http://localhost:8000/demo` atau `GET http://localhost:8000/`
+- **Fitur Utama:**
+  - 🕳️ **1-Click Presets Citra:** Uji cepat 5 kategori fasilitas publik dengan citra tersemat.
+  - 🗺️ **GPS Malang Presets:** Alun-Alun, Suhat, Ijen, dan Luar Malang (Uji Fail-Closed).
+  - 📊 **Visual Gauge & Breakdown:** Distribusi probabilitas Softmax, skor *Damage Severity*, dan dekomposisi *Smart Priority*.
+  - 🤖 **DeepSeek Policy Sandbox:** Skenario cepat anggaran Kota Malang dengan output narasi eksekutif dan kartu metrik proyeksi.
+- **Content-Type:** `text/html; charset=utf-8`
+
+---
+
+### 3. `POST /v1/verify` — Canonical (envelope)
 
 Verifikasi laporan foto kerusakan fasilitas publik warga menggunakan YOLOv11-cls.
 
@@ -1049,15 +1077,15 @@ Endpoint kompatibilitas khusus untuk NestJS `prediction.service.js`. Menerima in
 
 ---
 
-### 6. `POST /v1/policy-simulate`
+### 7. `POST /v1/policy-simulate`
 
-Mensimulasikan skenario intervensi kebijakan pemerintah kota menggunakan Google Gemini 2.5 Flash dengan output JSON terstruktur yang divalidasi oleh Pydantic.
+Mensimulasikan skenario intervensi kebijakan pemerintah kota menggunakan DeepSeek API (`deepseek-chat`) dengan output JSON terstruktur yang divalidasi oleh Pydantic serta diproteksi dari injeksi teks.
 
 - **URL (Canonical):** `POST http://localhost:8000/v1/policy-simulate`
 - **URL (NestJS):** `POST http://localhost:8000/api/v1/policy-simulate`
 - **Content-Type:** `application/json`
 - **Response Model:** `APIResponse[PolicySimulateData]`
-- **Timeout:** 20 detik (Gemini API)
+- **Timeout:** 20 detik (DeepSeek API)
 
 #### Request Body:
 ```json
@@ -1102,37 +1130,47 @@ Mensimulasikan skenario intervensi kebijakan pemerintah kota menggunakan Google 
       "Menggalakkan program edukasi pengelolaan sampah agar tidak membuang ke saluran air.",
       "Mengintegrasikan data curah hujan dan sistem peringatan dini banjir."
     ],
-    "model_used": "gemini-2.5-flash",
+    "model_used": "deepseek-chat",
     "_placeholder": false
   },
   "error": null
 }
 ```
 
-#### Response Error (HTTP 504 — Gemini Timeout):
+#### Response Error (HTTP 503 — API Key Belum Dikonfigurasi):
 ```json
 {
   "success": false,
   "data": null,
   "error": {
-    "code": "GEMINI_TIMEOUT",
-    "message": "Gemini API request melebihi batas waktu (20 detik)."
+    "code": "LLM_KEY_NOT_CONFIGURED",
+    "message": "DeepSeek / LLM API Key belum dikonfigurasi di environment server."
   }
 }
 ```
 
-#### Response Error (HTTP 502 — Format Tidak Valid dari Gemini):
+#### Response Error (HTTP 504 — DeepSeek Timeout):
 ```json
 {
   "success": false,
   "data": null,
   "error": {
-    "code": "GEMINI_INVALID_RESPONSE",
-    "message": "Gemini mengembalikan format respons yang tidak dapat divalidasi."
+    "code": "LLM_TIMEOUT",
+    "message": "Permintaan simulasi kebijakan ke LLM API melebihi batas waktu (20 detik)."
   }
 }
 ```
 
+#### Response Error (HTTP 502 — Format Tidak Valid dari LLM):
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "LLM_INVALID_RESPONSE",
+    "message": "Output dari LLM API bukan merupakan format JSON yang valid."
+  }
+}
 ---
 
 ## 📐 Format Response Envelope Standar
@@ -1170,11 +1208,13 @@ Semua endpoint canonical (`/v1/...`) menggunakan format response envelope standa
 ```mermaid
 graph TD
     Request["Incoming Request"] --> Validate{"Pydantic\nValidation"}
-    Validate -->|"Field missing atau wrong type"| E422V["422 VALIDATION_ERROR"]
-    Validate -->|"Image decode fail"| E422I["422 INVALID_IMAGE"]
-    Validate -->|"Valid"| Process{"Process"}
-    Process -->|"Gemini JSON invalid"| E502["502 GEMINI_INVALID_RESPONSE"]
-    Process -->|"Gemini timeout > 20s"| E504["504 GEMINI_TIMEOUT"]
+    Validate -->|"Field missing atau invalid"| E422V["422 VALIDATION_ERROR"]
+    Validate -->|"Image corrupt / SSRF Blocked"| E422I["422 INVALID_IMAGE"]
+    Validate -->|"Valid"| Process{"Process Inference"}
+    Process -->|"Model .pt/.json hilang"| E503M["503 MODEL_NOT_AVAILABLE\nFail-Closed"]
+    Process -->|"API Key LLM belum diset"| E503K["503 LLM_KEY_NOT_CONFIGURED"]
+    Process -->|"LLM JSON invalid"| E502["502 LLM_INVALID_RESPONSE"]
+    Process -->|"LLM timeout > 20s"| E504["504 LLM_TIMEOUT"]
     Process -->|"Unknown exception"| E500["500 INTERNAL_SERVER_ERROR"]
     Process -->|"Endpoint not found"| E404["404 HTTP_404"]
     Process -->|"Success"| E200["200 OK"]
@@ -1182,6 +1222,8 @@ graph TD
     style E200 fill:#E8F5E9,stroke:#34A853,color:#1B5E20
     style E422V fill:#FFF8E1,stroke:#F9A825,color:#F57F17
     style E422I fill:#FFF8E1,stroke:#F9A825,color:#F57F17
+    style E503M fill:#FFEBEE,stroke:#C62828,color:#B71C1C
+    style E503K fill:#FFEBEE,stroke:#C62828,color:#B71C1C
     style E502 fill:#FFEBEE,stroke:#C62828,color:#B71C1C
     style E504 fill:#FFEBEE,stroke:#C62828,color:#B71C1C
     style E500 fill:#FFEBEE,stroke:#C62828,color:#B71C1C
@@ -1190,11 +1232,13 @@ graph TD
 
 | HTTP Status | Error Code | Trigger |
 |---|---|---|
-| `200` | — | Sukses |
-| `422` | `VALIDATION_ERROR` | Field wajib tidak ada atau tipe data salah |
-| `422` | `INVALID_IMAGE` | Gambar tidak dapat dibaca (corrupt / base64 invalid) |
-| `502` | `GEMINI_INVALID_RESPONSE` | Gemini mengembalikan JSON tidak valid / gagal parse |
-| `504` | `GEMINI_TIMEOUT` | Gemini API tidak merespons dalam 20 detik |
+| `200` | — | Sukses memproses inferensi |
+| `422` | `VALIDATION_ERROR` | Field wajib tidak ada, rentang nilai salah, atau format tidak valid |
+| `422` | `INVALID_IMAGE` | Gambar tidak dapat dibaca (corrupt, base64 invalid, atau diblokir SSRF) |
+| `503` | `MODEL_NOT_AVAILABLE` | Bobot model YOLOv11/XGBoost belum dimuat (kebijakan Fail-Closed MOCK-1) |
+| `503` | `LLM_KEY_NOT_CONFIGURED` | API Key DeepSeek belum diset di `.env` (kebijakan LAT-POL) |
+| `502` | `LLM_INVALID_RESPONSE` | DeepSeek mengembalikan format yang tidak dapat divalidasi skema Pydantic |
+| `504` | `LLM_TIMEOUT` | DeepSeek API tidak merespons dalam batas waktu 20 detik |
 | `500` | `INTERNAL_SERVER_ERROR` | Error tidak terduga di sisi server |
 | `404` | `HTTP_404` | Endpoint tidak ditemukan |
 
@@ -1240,39 +1284,39 @@ graph LR
 
 ## 📈 Metrik Evaluasi Model Riil
 
-### A. YOLOv11-cls Computer Vision (Test Set: 390 Citra, Independen)
+### A. YOLOv11-cls Computer Vision (Test Set: 390 Citra, Leak-Free Held-Out)
 
-*Evaluasi dijalankan pada held-out test set independen (`dataset/test/`) — bukan training set.*
+*Evaluasi dijalankan pada held-out test set independen bebas kebocoran (`dataset/test/`) paska-resolusi LEAK-1.*
 
 | Metrik | Nilai |
 |---|---|
-| **Top-1 Accuracy** | **99.49%** (388/390 benar) |
-| **Macro Average F1-Score** | **99.48%** |
-| **Kecepatan Inferensi (MPS GPU)** | **~2.1 ms / citra** |
+| **Top-1 Accuracy** | **99.23%** (387/390 benar) |
+| **Macro Average F1-Score** | **99.23%** |
+| **Kecepatan Inferensi (MPS GPU)** | **~0.6–2.9 ms / citra** (API End-to-End: ~30–115ms) |
 | **Model Architecture** | `yolo11n-cls` (Nano Classifier) |
-| **Training Data** | 1.796 citra (70% stratified split) |
+| **Training Data** | 1.796 citra (70% leak-free group split) |
 | **Pretrained From** | ImageNet (Transfer Learning) |
 
 **Per-Class Precision / Recall / F1:**
 
 | Kategori Fasilitas | Precision | Recall | F1-Score | Support (Test) |
 |---|---|---|---|---|
-| **Drainase** | 0.9880 | 0.9880 | **0.9880** | 83 |
-| **Jalan Berlubang** | 1.0000 | 0.9865 | **0.9932** | 74 |
-| **Lampu Jalan** | 0.9855 | 1.0000 | **0.9927** | 68 |
-| **Rambu Lalu Lintas** | 1.0000 | 1.0000 | **1.0000** | 75 |
+| **Drainase** | 0.9762 | 0.9880 | **0.9820** | 83 |
+| **Jalan Berlubang** | 1.0000 | 0.9730 | **0.9863** | 74 |
+| **Lampu Jalan** | 1.0000 | 1.0000 | **1.0000** | 68 |
+| **Rambu Lalu Lintas** | 0.9868 | 1.0000 | **0.9934** | 75 |
 | **Trotoar** | 1.0000 | 1.0000 | **1.0000** | 90 |
-| **Macro Average** | **0.9947** | **0.9949** | **0.9948** | **390** |
+| **Macro Average** | **0.9926** | **0.9922** | **0.9923** | **390** |
 
 ```mermaid
 xychart-beta
     title "Per-Class F1-Score YOLOv11-cls (%)"
     x-axis ["Drainase", "Jalan Berlubang", "Lampu Jalan", "Rambu", "Trotoar"]
-    y-axis "F1-Score (%)" 98 --> 100.5
-    bar [98.80, 99.32, 99.27, 100.00, 100.00]
+    y-axis "F1-Score (%)" 97 --> 100.5
+    bar [98.20, 98.63, 100.00, 99.34, 100.00]
 ```
 
-*Laporan evaluasi mendalam (confusion matrix, per-class error analysis, training curves) tersedia di [`training_report.md`](training_report.md).*
+*Laporan evaluasi mendalam (confusion matrix, per-class error analysis, training curves) tersedia di [`training_report.md`](training_report.md) dan laporan batasan di [`LIMITATIONS.md`](LIMITATIONS.md).*
 
 ---
 
@@ -1312,17 +1356,19 @@ timeline
         Kurasi 5 dataset publik : 2.569 gambar CC BY 4.0 + MIT
         Stratified 70/15/15 split : scripts/prepare_dataset.py
     section Fase 3 - Computer Vision
-        Training YOLOv11n-cls : Transfer learning dari ImageNet
-        Evaluasi test set : 99.49% Top-1 Accuracy
+        Rebuild dataset dHash <=8 : scripts/rebuild_clean_dataset.py (LEAK-1 fix)
+        Training YOLOv11n-cls : Transfer learning + 180° rotation augmentation
+        Evaluasi test set : 99.23% Top-1 Accuracy (387/390 benar)
     section Fase 4 - Risk Prediction
         Sintesis 6.000 sampel hidrologi : generate_synthetic_zone_data.py
-        Training XGBoost : R2 = 0.9635
+        Training XGBoost : R2 = 0.9635, RMSE = 0.0490
     section Fase 5 - LLM Integration
-        Integrasi Gemini 2.5 Flash : Structured JSON + Pydantic validation
-        Timeout handling : GEMINI_TIMEOUT 20s error code
-    section Fase 6 - Testing
-        21 unit tests : pytest asyncio semua passing
-        Live E2E tests : test_live_verification + test_live_gemini
+        Migrasi ke DeepSeek API : deepseek-chat via httpx client
+        Prompt Injection Guard : Sanitasi keyword & skema validasi Pydantic
+    section Fase 6 - Testing & Security
+        32 unit tests passing : pytest asyncio (Health, Verification, Prediction, Security, Policy)
+        SSRF & Size Protection : Blokir IP privat/metadata, limit 8MB, fail-closed policy
+        Interactive Web Console : index.html at GET /demo & GET /
 ```
 
 | Keputusan | Pilihan | Alternatif Dipertimbangkan | Alasan |
@@ -1349,7 +1395,7 @@ graph LR
     FieldData["Field Data\nFoto Warga Malang"]
     Gap["⚠️ DOMAIN GAP\nSudut foto tidak ideal\nKamera resolusi rendah\nPencahayaan ekstrem\nTampilan fisik berbeda"]
 
-    TrainData -->|"99.49% Test Acc"| ModelPerf["Model Performance\npada test set publik"]
+    TrainData -->|"99.23% Test Acc"| ModelPerf["Model Performance\npada test set publik"]
     FieldData --> Gap --> ActualPerf["Performa Aktual\nBELUM DIVALIDASI"]
     ModelPerf -.->|"Mungkin berbeda signifikan"| ActualPerf
 
@@ -1357,9 +1403,9 @@ graph LR
     style ActualPerf fill:#FFF8E1,stroke:#F9A825,color:#F57F17
 ```
 
-Model YOLOv11 dievaluasi pada held-out test set dari dataset publik (akurasi 99.49%). **Belum ada validasi dengan foto lapangan warga asli Kota Malang.**
+Model YOLOv11 dievaluasi pada held-out test set dari dataset publik bebas kebocoran (akurasi **99.23%**). **Belum ada validasi dengan foto lapangan warga asli Kota Malang.**
 
-> **Rekomendasi:** Lakukan labeling **200–500 foto lapangan warga Malang per kategori** dan fine-tune model sebelum production launch.
+> **Rekomendasi:** Lakukan labeling **200–500 foto lapangan warga Malang per kategori** dan fine-tune model sebelum production launch. Dokumentasi lengkap limitasi teknis tersedia di [`LIMITATIONS.md`](LIMITATIONS.md).
 
 ---
 
@@ -1389,7 +1435,7 @@ Nilai `damage_severity` (0.0–1.0) adalah **estimasi terkalibrasi** dari confid
 
 <div align="center">
 
-**LaporKita AI Service** — Powered by YOLOv11, XGBoost & Google Gemini 2.5 Flash
+**LaporKita AI Service** — Powered by YOLOv11, XGBoost & DeepSeek LLM
 
 *Built for Kota Malang · MAGEITS Competition 2026*
 

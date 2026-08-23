@@ -3,15 +3,15 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class WeatherContext(BaseModel):
-    rainfall_mm: float = Field(default=0.0, ge=0.0, description="Rainfall in millimeters over last period")
-    temperature_c: float = Field(default=27.0, description="Ambient temperature in Celsius")
+    rainfall_mm: float = Field(default=0.0, ge=0.0, le=500.0, description="Rainfall in millimeters over last period")
+    temperature_c: float = Field(default=27.0, ge=-50.0, le=60.0, description="Ambient temperature in Celsius (-50C to 60C)")
     condition: Optional[str] = Field(default="Berawan", description="Text description of weather (e.g. Hujan Lebat, Cerah)")
     drainage_issue_ratio: Optional[float] = Field(default=0.2, ge=0.0, le=1.0, description="Ratio of drainage complaints")
 
 
 class PredictRiskRequest(BaseModel):
     zone_id: Optional[str] = Field(default=None, description="UUID of urban zone (ERD.md §2.11)")
-    report_density: int = Field(default=0, ge=0, description="Aggregated report count in the zone/area")
+    report_density: int = Field(default=0, ge=0, le=1000, description="Aggregated report count in the zone/area")
     weather_context: Optional[WeatherContext] = Field(default_factory=WeatherContext, description="Meteorological conditions")
     traffic_density: Optional[float] = Field(default=0.5, ge=0.0, le=1.0, description="Normalized traffic congestion level (0.0 to 1.0)")
     category: Optional[str] = Field(default="Drainase", description="Target facility category for risk estimation")
@@ -31,7 +31,7 @@ class PredictRiskData(BaseModel):
 class PredictZoneMetricsRequest(BaseModel):
     zone_id: Optional[str] = Field(default=None, description="UUID of urban zone")
     zone_name: Optional[str] = Field(default=None, description="Zone display name")
-    active_reports: int = Field(default=0, ge=0, description="Active report count in the zone")
+    active_reports: int = Field(default=0, ge=0, le=1000, description="Active report count in the zone")
 
 
 class WeatherContextSnapshot(BaseModel):

@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LaporKita AI Console — Live Testing Sandbox</title>
+  
+  <!-- Modern Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-dark: #070a13;
+      --bg-card: rgba(17, 24, 39, 0.75);
+      --bg-card-hover: rgba(31, 41, 55, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-active: rgba(0, 242, 254, 0.5);
+      
+      --primary: #00f2fe;
+      --primary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --accent-purple: #8a2be2;
+      --purple-gradient: linear-gradient(135deg, #7928ca 0%, #ff0080 100%);
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(79, 172, 254, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(138, 43, 226, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(0, 242, 254, 0.08) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* Glassmorphism Classes */
+    .glass-panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      transition: all 0.25s ease;
+    }
+
+    .glass-panel:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.35);
+    }
+
+    .logo-title h1 {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(180deg, #ffffff 0%, #d1d5db 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-title p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .api-url-box {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .api-url-box input {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      outline: none;
+      width: 190px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: var(--accent-green);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: var(--bg-dark);
+      background: var(--primary-gradient);
+      box-shadow: 0 4px 14px rgba(0, 242, 254, 0.3);
+    }
+
+    /* Tab Content Grids */
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 960px) {
+      .grid-2col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-header h2 {
+      font-family: var(--font-heading);
+      font-size: 17px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .form-control, .form-select, .form-textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    /* Range Slider */
+    .range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .range-wrap input[type="range"] {
+      flex: 1;
+      accent-color: var(--primary);
+    }
+
+    .range-val {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      min-width: 60px;
+      text-align: right;
+    }
+
+    /* Image Drop Area */
+    .drop-zone {
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--primary);
+      background: rgba(0, 242, 254, 0.05);
+    }
+
+    .preview-img {
+      max-height: 200px;
+      max-width: 100%;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-top: 12px;
+      display: none;
+      border: 1px solid var(--border-color);
+    }
+
+    /* Preset Buttons */
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .chip-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .chip-btn:hover {
+      background: rgba(0, 242, 254, 0.15);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Action Buttons */
+    .btn-primary {
+      width: 100%;
+      padding: 12px 20px;
+      border-radius: 10px;
+      background: var(--primary-gradient);
+      border: none;
+      color: var(--bg-dark);
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0, 242, 254, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(0, 242, 254, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Output Results Area */
+    .result-hero {
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .result-hero.approved {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.3) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .result-hero.manual {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(120, 53, 15, 0.3) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    .hero-badge {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .approved .hero-badge { color: var(--accent-green); }
+    .manual .hero-badge { color: var(--accent-amber); }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .metric-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .metric-value.highlight {
+      color: var(--primary);
+    }
+
+    /* Progress Probability Bars */
+    .prob-list {
+      margin-top: 14px;
+    }
+
+    .prob-row {
+      margin-bottom: 10px;
+    }
+
+    .prob-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .prob-bar-bg {
+      height: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .prob-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--primary-gradient);
+      width: 0%;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .prob-bar-fill.highest {
+      background: linear-gradient(90deg, #10b981, #00f2fe);
+    }
+
+    /* JSON Accordion */
+    .accordion-toggle {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 14px;
+      width: 100%;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+    }
+
+    .raw-json-box {
+      background: #04070d;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #a7f3d0;
+      overflow-x: auto;
+      max-height: 250px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    /* Narrative text box */
+    .narrative-box {
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 3px solid var(--primary);
+      padding: 16px;
+      border-radius: 0 8px 8px 0;
+      font-size: 13px;
+      color: #e5e7eb;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    /* Checklist */
+    .check-list {
+      list-style: none;
+      font-size: 13px;
+    }
+
+    .check-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .check-icon.pass { color: var(--accent-green); }
+    .check-icon.fail { color: var(--accent-red); }
+
+    /* Spinner */
+    .spinner {
+      border: 2px solid rgba(0, 0, 0, 0.2);
+      border-top: 2px solid var(--bg-dark);
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Top Header -->
+    <header class="glass-panel">
+      <div class="logo-group">
+        <div class="logo-icon">🧠</div>
+        <div class="logo-title">
+          <h1>LaporKita AI Console</h1>
+          <p>Interactive Testing Sandbox — YOLOv11-cls + XGBoost + DeepSeek LLM</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="api-url-box">
+          <span style="color: var(--text-muted); margin-right: 6px;">API:</span>
+          <input type="text" id="apiBaseUrl" value="http://localhost:8000" placeholder="http://localhost:8000" />
+        </div>
+        <div class="status-pill" id="healthPill">
+          <div class="status-dot" id="healthDot"></div>
+          <span id="healthLabel">Checking...</span>
+        </div>
+        <button class="chip-btn" onclick="checkHealth()" title="Refresh System Status">🔄 Ping</button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('vision')">🔍 1. AI Vision Verification</button>
+      <button class="tab-btn" onclick="switchTab('risk')">📊 2. Urban Risk Predictor</button>
+      <button class="tab-btn" onclick="switchTab('policy')">🧬 3. Policy Simulator (LLM)</button>
+      <button class="tab-btn" onclick="switchTab('specs')">🩺 4. Health & Model Specs</button>
+    </nav>
+
+    <!-- TAB 1: AI Vision Verification -->
+    <div id="tab-vision" class="tab-pane active">
+      <div class="grid-2col">
+        
+        <!-- Input Form -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2>📷 Input Laporan Kerusakan</h2>
+            <span style="font-size: 12px; color: var(--text-muted);">Rules.md §1.2 & §2.1</span>
+          </div>
+          <div class="card-body">
+            
+            <!-- Sample Image Presets -->
+            <div class="form-group">
+              <label class="form-label">Pilih Sampel Uji Cepat (1-Click Presets):</label>
+              <div class="preset-chips">
+                <button class="chip-btn" onclick="loadSampleImage('Jalan Berlubang')">🕳️ Jalan Berlubang</button>
+                <button class="chip-btn" onclick="loadSampleImage('Drainase')">🌊 Drainase</button>
+                <button class="chip-btn" onclick="loadSampleImage('Lampu Jalan')">💡 Lampu Jalan</button>
+                <button class="chip-btn" onclick="loadSampleImage('Rambu Lalu Lintas')">🪧 Rambu Lalu Lintas</button>
+                <button class="chip-btn" onclick="loadSampleImage('Trotoar')">🚶 Trotoar</button>
+              </div>
+            </div>
+
+            <!-- Image Drop Zone -->
+            <div class="form-group">
+              <label class="form-label">Upload Foto Kerusakan:</label>
+              <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <div id="dropPrompt">
+                  <div style="font-size: 28px; margin-bottom: 6px;">📥</div>
+                  <div style="font-size: 13px; font-weight: 600;">Klik atau seret foto ke sini</div>
+                  <div style="font-size: 11px; color: var(--text-dim);">Format JPEG/PNG (Maks 8MB)</div>
+                </div>
+                <img id="imagePreview" class="preview-img" alt="Preview Gambar" />
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)" />
+              </div>
+            </div>
+
+            <!-- Claimed Category -->
+            <div class="form-group">
+              <label class="form-label">Klaim Kategori Warga (claimed_category):</label>
+              <select id="claimedCategory" class="form-select">
+                <option value="Jalan Berlubang">Jalan Berlubang</option>
+                <option value="Lampu Jalan">Lampu Jalan</option>
+                <option value="Rambu Lalu Lintas">Rambu Lalu Lintas</option>
+                <option value="Trotoar">Trotoar</option>
+                <option value="Drainase">Drainase</option>
+              </select>
+            </div>
+
+            <!-- GPS Coordinates -->
+            <div class="form-group">
+              <label class="form-label">Koordinat Lokasi (Malang BBox):</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                <input type="number" step="0.0001" id="gpsLat" class="form-control" value="-7.9826" placeholder="Latitude" />
+                <input type="number" step="0.0001" id="gpsLon" class="form-control" value="112.6308" placeholder="Longitude" />
+              </div>
+              <div class="preset-chips">
+                <button class="chip-btn" onclick="setGps(-7.9826, 112.6308)">🏛️ Alun-Alun</button>
+                <button class="chip-btn" onclick="setGps(-7.9425, 112.6150)">🛣️ Suhat</button>
+                <button class="chip-btn" onclick="setGps(-7.9719, 112.6231)">🌲 Ijen</button>
+                <button class="chip-btn" onclick="setGps(-6.2088, 106.8456)" style="color: var(--accent-red);" title="Uji koordinat di luar Kota Malang">⚠️ Luar Malang</button>
+              </div>
+            </div>
+
+            <!-- Citizen Upvotes Slider -->
+            <div class="form-group">
+              <label class="form-label">Jumlah Dukungan Warga (support_count):</label>
+              <div class="range-wrap">
+                <input type="range" id="supportCount" min="0" max="100" value="12" oninput="document.getElementById('supportVal').innerText = this.value" />
+                <span class="range-val" id="supportVal">12</span>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button class="btn-primary" id="btnVerify" onclick="executeVerification()">
+              <span class="spinner" id="verifySpinner"></span>
+              <span>Jalankan Verifikasi AI 🚀</span>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- Verification Results -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2>✨ Hasil Verifikasi & Skor</h2>
+            <span id="latencyBadge" style="font-family: var(--font-mono); font-size: 11px; color: var(--primary);">0 ms</span>
+          </div>
+          <div class="card-body" id="verificationResultEmpty">
+            <div style="text-align: center; padding: 60px 20px; color: var(--text-dim);">
+              <div style="font-size: 40px; margin-bottom: 12px;">🔍</div>
+              <p>Pilih foto sampel atau upload foto, lalu klik <strong>Jalankan Verifikasi AI</strong> untuk melihat analisis model YOLOv11.</p>
+            </div>
+          </div>
+
+          <div class="card-body" id="verificationResultContent" style="display: none;">
+            
+            <!-- Hero Decision Badge -->
+            <div id="decisionHero" class="result-hero approved">
+              <div>
+                <div class="metric-label" style="color: inherit;">Status Verifikasi LaporKita</div>
+                <div class="hero-badge" id="heroBadgeText">APPROVED (AUTO)</div>
+              </div>
+              <div style="text-align: right;">
+                <div class="metric-label" style="color: inherit;">Confidence</div>
+                <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 800;" id="heroConfText">99.4%</div>
+              </div>
+            </div>
+
+            <!-- Decision Checklist -->
+            <div class="form-group">
+              <label class="form-label">Pemeriksaan Aturan Bisnis (Rules.md):</label>
+              <ul class="check-list">
+                <li>
+                  <span class="check-icon pass" id="chkGps">✓</span>
+                  <span>Validasi Lokasi Kota Malang: <strong id="valGpsTxt">Valid</strong></span>
+                </li>
+                <li>
+                  <span class="check-icon pass" id="chkTime">✓</span>
+                  <span>Validasi Timestamp Laporan: <strong id="valTimeTxt">Valid</strong></span>
+                </li>
+                <li>
+                  <span class="check-icon pass" id="chkCat">✓</span>
+                  <span>Kesesuaian Kategori (category_matched): <strong id="valCatTxt">Cocok</strong></span>
+                </li>
+                <li>
+                  <span class="check-icon pass" id="chkConf">✓</span>
+                  <span>Ambang Batas Keyakinan Model (&ge; 0.60): <strong id="valConfTxt">Lolos</strong></span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Key Metrics Grid -->
+            <div class="metric-grid">
+              <div class="metric-card">
+                <div class="metric-label">Prediksi Model</div>
+                <div class="metric-value highlight" id="resPredCat">-</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Damage Severity</div>
+                <div class="metric-value" id="resSeverity">-</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Smart Priority</div>
+                <div class="metric-value highlight" id="resPriority">-</div>
+              </div>
+            </div>
+
+            <!-- Probabilities Progress Bars -->
+            <div class="form-group">
+              <label class="form-label">Distribusi Probabilitas Kelas (Softmax):</label>
+              <div class="prob-list" id="probListContainer">
+                <!-- Dynamically injected -->
+              </div>
+            </div>
+
+            <!-- Priority Decomposition -->
+            <div class="form-group" style="margin-top: 16px;">
+              <label class="form-label">Dekomposisi Bobot Smart Priority (Rules.md §1.3):</label>
+              <div class="metric-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="metric-card" style="padding: 8px;">
+                  <div class="metric-label">Severity (35%)</div>
+                  <div style="font-family: var(--font-mono); font-size: 13px; font-weight: 700;" id="decompSev">-</div>
+                </div>
+                <div class="metric-card" style="padding: 8px;">
+                  <div class="metric-label">Support (25%)</div>
+                  <div style="font-family: var(--font-mono); font-size: 13px; font-weight: 700;" id="decompSup">-</div>
+                </div>
+                <div class="metric-card" style="padding: 8px;">
+                  <div class="metric-label">Density (20%)</div>
+                  <div style="font-family: var(--font-mono); font-size: 13px; font-weight: 700;" id="decompDen">-</div>
+                </div>
+                <div class="metric-card" style="padding: 8px;">
+                  <div class="metric-label">Urgency (20%)</div>
+                  <div style="font-family: var(--font-mono); font-size: 13px; font-weight: 700;" id="decompUrg">-</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Raw JSON Toggle -->
+            <button class="accordion-toggle" onclick="toggleRawJson('jsonVerify')">
+              <span>View Raw JSON Response</span>
+              <span>▼</span>
+            </button>
+            <pre class="raw-json-box" id="jsonVerify"></pre>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: Urban Risk Predictor -->
+    <div id="tab-risk" class="tab-pane">
+      <div class="grid-2col">
+        
+        <!-- Risk Form -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2>⚡ Parameter Simulasi Risiko Lingkungan</h2>
+            <span style="font-size: 12px; color: var(--text-muted);">XGBoost Regressor</span>
+          </div>
+          <div class="card-body">
+            
+            <div class="form-group">
+              <label class="form-label">Zona Wilayah / Kecamatan Kota Malang:</label>
+              <select id="riskZone" class="form-select">
+                <option value="Klojen Pusat">Klojen (Pusat Kota & Alun-Alun)</option>
+                <option value="Lowokwaru Suhat" selected>Lowokwaru (Koridor Suhat & Kampus)</option>
+                <option value="Blimbing Industri">Blimbing (Kawasan Industri & Terminal)</option>
+                <option value="Sukun Permukiman">Sukun (Permukiman Padat)</option>
+                <option value="Kedungkandang DAS">Kedungkandang (DAS Amprong)</option>
+              </select>
+            </div>
+
+            <!-- Rainfall Slider -->
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between;">
+                <label class="form-label">Intensitas Curah Hujan (rainfall_mm):</label>
+                <span id="rainfallLabel" style="font-size: 12px; color: var(--primary);">Hujan Sedang</span>
+              </div>
+              <div class="range-wrap">
+                <input type="range" id="riskRainfall" min="0" max="150" value="65" oninput="updateRainfallLabel(this.value)" />
+                <span class="range-val" id="riskRainfallVal">65 mm</span>
+              </div>
+            </div>
+
+            <!-- Temperature Slider -->
+            <div class="form-group">
+              <label class="form-label">Suhu Udara (temperature_c):</label>
+              <div class="range-wrap">
+                <input type="range" id="riskTemp" min="16" max="38" value="25" oninput="document.getElementById('riskTempVal').innerText = this.value + ' °C'" />
+                <span class="range-val" id="riskTempVal">25 °C</span>
+              </div>
+            </div>
+
+            <!-- Traffic Density Slider -->
+            <div class="form-group">
+              <label class="form-label">Kerapatan Lalu Lintas (traffic_density: 0.0 - 1.0):</label>
+              <div class="range-wrap">
+                <input type="range" id="riskTraffic" min="0" max="1" step="0.05" value="0.75" oninput="document.getElementById('riskTrafficVal').innerText = this.value" />
+                <span class="range-val" id="riskTrafficVal">0.75</span>
+              </div>
+            </div>
+
+            <!-- Active Reports Slider -->
+            <div class="form-group">
+              <label class="form-label">Akumulasi Laporan Aktif di Zona (report_density):</label>
+              <div class="range-wrap">
+                <input type="range" id="riskReports" min="0" max="50" value="18" oninput="document.getElementById('riskReportsVal').innerText = this.value" />
+                <span class="range-val" id="riskReportsVal">18</span>
+              </div>
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+              <label class="form-label">Kategori Fasilitas Terdampak:</label>
+              <select id="riskCategory" class="form-select">
+                <option value="Drainase" selected>Drainase</option>
+                <option value="Jalan Berlubang">Jalan Berlubang</option>
+                <option value="Trotoar">Trotoar</option>
+                <option value="Lampu Jalan">Lampu Jalan</option>
+                <option value="Rambu Lalu Lintas">Rambu Lalu Lintas</option>
+              </select>
+            </div>
+
+            <button class="btn-primary" id="btnPredictRisk" onclick="executeRiskPrediction()">
+              <span class="spinner" id="riskSpinner"></span>
+              <span>Prediksi Probabilitas Risiko ⚡</span>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- Risk Output -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2>📈 Proyeksi Risiko Genangan & Banjir</h2>
+            <span id="riskLatencyBadge" style="font-family: var(--font-mono); font-size: 11px; color: var(--primary);">0 ms</span>
+          </div>
+          <div class="card-body" id="riskResultEmpty">
+            <div style="text-align: center; padding: 60px 20px; color: var(--text-dim);">
+              <div style="font-size: 40px; margin-bottom: 12px;">📊</div>
+              <p>Atur slider parameter cuaca dan kepadatan, lalu klik <strong>Prediksi Probabilitas Risiko</strong>.</p>
+            </div>
+          </div>
+
+          <div class="card-body" id="riskResultContent" style="display: none;">
+            
+            <div id="riskHero" class="result-hero approved">
+              <div>
+                <div class="metric-label" style="color: inherit;">Tingkat Kerentanan Wilayah</div>
+                <div class="hero-badge" id="riskLevelBadge">HIGH STRESS</div>
+              </div>
+              <div style="text-align: right;">
+                <div class="metric-label" style="color: inherit;">Flood Risk Probability</div>
+                <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 800;" id="riskProbText">78.4%</div>
+              </div>
+            </div>
+
+            <!-- Weather Context Box -->
+            <div class="form-group">
+              <label class="form-label">Konteks Stasiun Cuaca BMKG Terkalibrasi:</label>
+              <div class="narrative-box" id="weatherContextBox">
+                Kondisi cuaca terdeteksi: <strong>Hujan Deras</strong> dengan curah hujan 65 mm dan kelembapan tinggi. Wilayah berada dalam pengawasan siaga banjir DPUPRPKP Kota Malang.
+              </div>
+            </div>
+
+            <!-- Risk Metrics -->
+            <div class="metric-grid">
+              <div class="metric-card">
+                <div class="metric-label">Model Digunakan</div>
+                <div class="metric-value highlight" style="font-size: 14px;">XGBoost Regressor</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">R² Baseline</div>
+                <div class="metric-value">0.9635</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Suhu / Hujan</div>
+                <div class="metric-value" id="riskWeatherSummary">25°C / 65mm</div>
+              </div>
+            </div>
+
+            <!-- Recommended Actions -->
+            <div class="form-group">
+              <label class="form-label">Rekomendasi Operasional Tanggap Cepat:</label>
+              <ul class="check-list" id="riskActionList">
+                <li><span class="check-icon pass">✓</span> Siagakan pompa portable pada titik-titik cekungan air terendah.</li>
+                <li><span class="check-icon pass">✓</span> Lakukan pembersihan rutin sampah grill drainase sebelum puncak hujan.</li>
+                <li><span class="check-icon pass">✓</span> Kirim notifikasi peringatan jalur genangan ke dashboard Dishub.</li>
+              </ul>
+            </div>
+
+            <!-- Raw JSON Toggle -->
+            <button class="accordion-toggle" onclick="toggleRawJson('jsonRisk')">
+              <span>View Raw JSON Response</span>
+              <span>▼</span>
+            </button>
+            <pre class="raw-json-box" id="jsonRisk"></pre>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: Policy Simulator -->
+    <div id="tab-policy" class="tab-pane">
+      <div class="grid-2col">
+        
+        <!-- Policy Form -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2>🤖 Skenario Kebijakan Publik Kota Malang</h2>
+            <span style="font-size: 12px; color: var(--primary);">DeepSeek LLM</span>
+          </div>
+          <div class="card-body">
+            
+            <div class="form-group">
+              <label class="form-label">Pilih Contoh Skenario Cepat:</label>
+              <div class="preset-chips">
+                <button class="chip-btn" onclick="setPolicyScenario('drainase')">🌊 Normalisasi Drainase Suhat Rp 1.5M</button>
+                <button class="chip-btn" onclick="setPolicyScenario('trotoar')">🚶 Revitalisasi Trotoar Difabel Ijen Rp 450Jt</button>
+                <button class="chip-btn" onclick="setPolicyScenario('pju')">💡 Smart PJU LED Dinoyo Rp 300Jt</button>
+                <button class="chip-btn" onclick="setPolicyScenario('jalan')">🕳️ Tambal Jalan 24 Jam Rp 2M</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Uraian Pertanyaan / Usulan Skenario Kebijakan:</label>
+              <textarea id="policyPrompt" class="form-textarea" placeholder="Tuliskan usulan kebijakan publik di Kota Malang..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Horizon Waktu Proyeksi (Bulan):</label>
+              <div class="range-wrap">
+                <input type="range" id="policyHorizon" min="1" max="24" value="6" oninput="document.getElementById('policyHorizonVal').innerText = this.value + ' Bulan'" />
+                <span class="range-val" id="policyHorizonVal">6 Bulan</span>
+              </div>
+            </div>
+
+            <button class="btn-primary" id="btnSimulatePolicy" onclick="executePolicySimulation()">
+              <span class="spinner" id="policySpinner"></span>
+              <span>Simulasikan Kebijakan Publik (DeepSeek) 🤖</span>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- Policy Output -->
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2>📑 Hasil Analisis Eksekutif & Proyeksi</h2>
+            <span id="policyLatencyBadge" style="font-family: var(--font-mono); font-size: 11px; color: var(--primary);">0 ms</span>
+          </div>
+          <div class="card-body" id="policyResultEmpty">
+            <div style="text-align: center; padding: 60px 20px; color: var(--text-dim);">
+              <div style="font-size: 40px; margin-bottom: 12px;">🧬</div>
+              <p>Pilih skenario kebijakan atau ketik pertanyaan, lalu klik <strong>Simulasikan Kebijakan Publik</strong>.</p>
+            </div>
+          </div>
+
+          <div class="card-body" id="policyResultContent" style="display: none;">
+            
+            <!-- Narrative Box -->
+            <div class="form-group">
+              <label class="form-label">Analisis Narasi Eksekutif (Bappeda / DPUPR):</label>
+              <div class="narrative-box" id="policyNarrative">
+                <!-- Injected -->
+              </div>
+            </div>
+
+            <!-- Projected Impact Metrics Grid -->
+            <div class="metric-grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="metric-card">
+                <div class="metric-label">Estimasi Reduksi Insiden</div>
+                <div class="metric-value highlight" id="polRedPct">+35.0%</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Estimasi Anggaran (IDR)</div>
+                <div class="metric-value" id="polBudget">Rp 450.000.000</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Waktu Hingga Efektif</div>
+                <div class="metric-value" id="polWeeks">6 Minggu</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Kenaikan Kepuasan Publik</div>
+                <div class="metric-value highlight" id="polSatPct">+28.0%</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">OPD Penanggung Jawab:</label>
+              <div style="font-family: var(--font-mono); font-size: 12px; color: var(--primary); padding: 6px 12px; background: rgba(0,0,0,0.3); border-radius: 6px;" id="polTargetDept">
+                DPUPRPKP Kota Malang
+              </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="form-group">
+              <label class="form-label">Rekomendasi Langkah Strategis:</label>
+              <ul class="check-list" id="polRecList">
+                <!-- Injected -->
+              </ul>
+            </div>
+
+            <!-- Mitigations -->
+            <div class="form-group">
+              <label class="form-label">Mitigasi Risiko Operasional:</label>
+              <ul class="check-list" id="polMitList">
+                <!-- Injected -->
+              </ul>
+            </div>
+
+            <!-- Raw JSON Toggle -->
+            <button class="accordion-toggle" onclick="toggleRawJson('jsonPolicy')">
+              <span>View Raw JSON Response</span>
+              <span>▼</span>
+            </button>
+            <pre class="raw-json-box" id="jsonPolicy"></pre>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 4: Health & System Specs -->
+    <div id="tab-specs" class="tab-pane">
+      <div class="grid-2col">
+        
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2>🩺 Status Sistem & Kesiapan Model</h2>
+            <button class="chip-btn" onclick="checkHealth()">🔄 Refresh</button>
+          </div>
+          <div class="card-body">
+            <ul class="check-list" style="font-size: 14px;">
+              <li>
+                <span class="check-icon pass" id="specYoloIcon">✓</span>
+                <span>YOLOv11-cls Computer Vision: <strong id="specYoloTxt">Loaded (3.0 MB)</strong></span>
+              </li>
+              <li>
+                <span class="check-icon pass" id="specXgbIcon">✓</span>
+                <span>XGBoost Urban Risk Predictor: <strong id="specXgbTxt">Loaded (497 KB)</strong></span>
+              </li>
+              <li>
+                <span class="check-icon pass" id="specLlmIcon">✓</span>
+                <span>DeepSeek LLM (Policy Simulator): <strong id="specLlmTxt">Configured (deepseek-chat)</strong></span>
+              </li>
+              <li>
+                <span class="check-icon pass">✓</span>
+                <span>SSRF Protection & IP Resolver: <strong>Active (Private & Metadata Blocked)</strong></span>
+              </li>
+              <li>
+                <span class="check-icon pass">✓</span>
+                <span>Fail-Closed Protection: <strong>Active (Zero-Mock Policy)</strong></span>
+              </li>
+            </ul>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">Metrik Validasi Bebas Kebocoran (LEAK-1 Fix):</h3>
+              <div class="metric-grid">
+                <div class="metric-card">
+                  <div class="metric-label">Test Accuracy</div>
+                  <div class="metric-value highlight">99.23%</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Macro F1</div>
+                  <div class="metric-value">99.23%</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Leakage Pairs</div>
+                  <div class="metric-value" style="color: var(--accent-green);">0 (Clean)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-panel">
+          <div class="card-header">
+            <h2>📜 Tautan Dokumentasi & Laporan</h2>
+          </div>
+          <div class="card-body">
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+              LaporKita AI Service dibangun dengan kepatuhan penuh terhadap transparansi ilmiah dan kejujuran metrik.
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <a href="README.md" target="_blank" class="chip-btn" style="text-decoration: none; padding: 12px; display: block;">📖 Buka README.md (Arsitektur & Spesifikasi Lengkap)</a>
+              <a href="LIMITATIONS.md" target="_blank" class="chip-btn" style="text-decoration: none; padding: 12px; display: block;">⚠️ Buka LIMITATIONS.md (Laporan Batasan Teknis Ilmiah)</a>
+              <a href="training_report.md" target="_blank" class="chip-btn" style="text-decoration: none; padding: 12px; display: block;">📊 Buka training_report.md (Confusion Matrix & Per-Class F1)</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Embedded sample thumbnail base64s for 1-click testing
+    let sampleImages = {};
+    let currentBase64Image = null;
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Auto-set API Base URL if loaded via http/https server
+      if (window.location.protocol.startsWith('http')) {
+        document.getElementById('apiBaseUrl').value = window.location.origin;
+      }
+      
+      // Load sample images from json if available
+      try {
+        const res = await fetch('app/sample_images.json');
+        if (res.ok) {
+          sampleImages = await res.json();
+        }
+      } catch (e) {
+        console.log('Sample images will be loaded dynamically.');
+      }
+
+      // Check server health on load
+      checkHealth();
+    });
+
+    function getApiBase() {
+      const url = document.getElementById('apiBaseUrl').value.trim();
+      return url.replace(/\/+$/, '');
+    }
+
+    // Health Check Probe
+    async function checkHealth() {
+      const pill = document.getElementById('healthPill');
+      const dot = document.getElementById('healthDot');
+      const label = document.getElementById('healthLabel');
+      
+      label.innerText = 'Connecting...';
+      dot.style.background = '#f59e0b';
+      
+      try {
+        const t0 = performance.now();
+        const res = await fetch(`${getApiBase()}/health`);
+        const latency = Math.round(performance.now() - t0);
+        
+        if (res.ok) {
+          const data = await res.json();
+          label.innerText = `Online (${latency}ms)`;
+          dot.style.background = '#10b981';
+          pill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+
+          if (data.data && data.data.models) {
+            const m = data.data.models;
+            document.getElementById('specYoloTxt').innerText = m.yolo_classification_loaded ? 'Loaded (3.0 MB)' : 'Not Loaded';
+            document.getElementById('specXgbTxt').innerText = m.xgboost_risk_loaded ? 'Loaded (497 KB)' : 'Not Loaded';
+            document.getElementById('specLlmTxt').innerText = m.gemini_configured ? 'Configured (deepseek-chat)' : 'Not Configured';
+          }
+        } else {
+          label.innerText = `Degraded (${res.status})`;
+          dot.style.background = '#ef4444';
+          pill.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        }
+      } catch (err) {
+        label.innerText = 'Offline / Error';
+        dot.style.background = '#ef4444';
+        pill.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+      }
+    }
+
+    // Tab Switcher
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+
+      event.currentTarget.classList.add('active');
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+
+    // GPS Preset Helper
+    function setGps(lat, lon) {
+      document.getElementById('gpsLat').value = lat;
+      document.getElementById('gpsLon').value = lon;
+    }
+
+    // Load Sample Image
+    async function loadSampleImage(category) {
+      document.getElementById('claimedCategory').value = category;
+      
+      if (sampleImages[category]) {
+        currentBase64Image = sampleImages[category];
+        showImagePreview(currentBase64Image);
+        return;
+      }
+
+      // If sample_images.json wasn't preloaded, fetch it
+      try {
+        const res = await fetch('app/sample_images.json');
+        if (res.ok) {
+          sampleImages = await res.json();
+          if (sampleImages[category]) {
+            currentBase64Image = sampleImages[category];
+            showImagePreview(currentBase64Image);
+          }
+        }
+      } catch (e) {
+        alert('Silakan upload file foto dari komputer Anda untuk menguji.');
+      }
+    }
+
+    // File Upload Handler
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentBase64Image = e.target.result;
+        showImagePreview(currentBase64Image);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showImagePreview(src) {
+      const preview = document.getElementById('imagePreview');
+      preview.src = src;
+      preview.style.display = 'block';
+      document.getElementById('dropPrompt').style.display = 'none';
+    }
+
+    // Execute Verification
+    async function executeVerification() {
+      if (!currentBase64Image) {
+        alert('Silakan pilih salah satu preset foto atau upload foto terlebih dahulu!');
+        return;
+      }
+
+      const btn = document.getElementById('btnVerify');
+      const spinner = document.getElementById('verifySpinner');
+      btn.disabled = true;
+      spinner.style.display = 'inline-block';
+
+      const payload = {
+        image_base64: currentBase64Image,
+        claimed_category: document.getElementById('claimedCategory').value,
+        latitude: parseFloat(document.getElementById('gpsLat').value),
+        longitude: parseFloat(document.getElementById('gpsLon').value),
+        support_count: parseInt(document.getElementById('supportCount').value, 10),
+        report_time: new Date().toISOString()
+      };
+
+      const t0 = performance.now();
+      try {
+        const res = await fetch(`${getApiBase()}/v1/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const latency = Math.round(performance.now() - t0);
+        document.getElementById('latencyBadge').innerText = `${latency} ms`;
+
+        const data = await res.json();
+        renderVerificationResult(data, res.status);
+      } catch (err) {
+        alert(`Gagal memanggil API: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+      }
+    }
+
+    function renderVerificationResult(response, statusCode) {
+      document.getElementById('verificationResultEmpty').style.display = 'none';
+      document.getElementById('verificationResultContent').style.display = 'block';
+      document.getElementById('jsonVerify').innerText = JSON.stringify(response, null, 2);
+
+      if (!response.success) {
+        alert(`Error [${response.error.code}]: ${response.error.message}`);
+        return;
+      }
+
+      const d = response.data;
+      
+      // Hero Banner
+      const hero = document.getElementById('decisionHero');
+      const badgeText = document.getElementById('heroBadgeText');
+      const confText = document.getElementById('heroConfText');
+
+      if (d.is_valid && !d.needs_manual_review) {
+        hero.className = 'result-hero approved';
+        badgeText.innerText = 'APPROVED (AUTO)';
+      } else {
+        hero.className = 'result-hero manual';
+        badgeText.innerText = 'NEEDS MANUAL REVIEW';
+      }
+      confText.innerText = `${(d.ai_confidence_score * 100).toFixed(1)}%`;
+
+      // Checklist
+      const chkGps = document.getElementById('chkGps');
+      chkGps.className = d.gps_valid ? 'check-icon pass' : 'check-icon fail';
+      chkGps.innerText = d.gps_valid ? '✓' : '✗';
+      document.getElementById('valGpsTxt').innerText = d.gps_valid ? 'Valid (Dalam Kota Malang)' : 'Luar Malang';
+
+      const chkTime = document.getElementById('chkTime');
+      chkTime.className = d.timestamp_valid ? 'check-icon pass' : 'check-icon fail';
+      chkTime.innerText = d.timestamp_valid ? '✓' : '✗';
+      document.getElementById('valTimeTxt').innerText = d.timestamp_valid ? 'Valid' : 'Tidak Valid';
+
+      const chkCat = document.getElementById('chkCat');
+      chkCat.className = d.category_matched ? 'check-icon pass' : 'check-icon fail';
+      chkCat.innerText = d.category_matched ? '✓' : '✗';
+      document.getElementById('valCatTxt').innerText = d.category_matched ? 'Cocok dengan Foto' : 'Mismatch';
+
+      const chkConf = document.getElementById('chkConf');
+      const confPass = d.ai_confidence_score >= 0.6;
+      chkConf.className = confPass ? 'check-icon pass' : 'check-icon fail';
+      chkConf.innerText = confPass ? '✓' : '✗';
+      document.getElementById('valConfTxt').innerText = confPass ? 'Lolos (≥ 0.60)' : 'Rendah (< 0.60)';
+
+      // Metrics
+      document.getElementById('resPredCat').innerText = d.predicted_category;
+      document.getElementById('resSeverity').innerText = d.damage_severity.toFixed(3);
+      document.getElementById('resPriority').innerText = `${d.smart_priority_score} / 100`;
+
+      // Probability List (6 classes)
+      const container = document.getElementById('probListContainer');
+      container.innerHTML = '';
+
+      const probs = d.class_probabilities || d.all_class_probabilities || {};
+      if (Object.keys(probs).length > 0) {
+        const sorted = Object.entries(probs).sort((a, b) => b[1] - a[1]);
+        sorted.forEach(([cls, prob], idx) => {
+          const pct = (prob * 100).toFixed(1);
+          const isTop = idx === 0;
+          const isOOD = cls === 'bukan_fasilitas';
+          container.innerHTML += `
+            <div class="prob-row">
+              <div class="prob-header">
+                <span style="${isTop ? 'font-weight:700; color:' + (isOOD ? 'var(--danger)' : 'var(--primary)') + ';' : ''}">${cls} ${isOOD ? '(OOD)' : ''}</span>
+                <span style="font-family:var(--font-mono); font-size:11px;">${pct}%</span>
+              </div>
+              <div class="prob-bar-bg">
+                <div class="prob-bar-fill ${isTop ? (isOOD ? 'fail' : 'highest') : ''}" style="width: ${pct}%; ${isOOD && isTop ? 'background:var(--danger);' : ''}"></div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // Priority Decomposition
+      if (d.scoring_details) {
+        const sc = d.scoring_details;
+        document.getElementById('decompSev').innerText = `${sc.severity_component.toFixed(1)} / 35`;
+        document.getElementById('decompSup').innerText = `${sc.support_component.toFixed(1)} / 25`;
+        document.getElementById('decompDen').innerText = `${sc.density_component.toFixed(1)} / 20`;
+        document.getElementById('decompUrg').innerText = `${sc.urgency_component.toFixed(1)} / 20`;
+      }
+    }
+
+    // Risk Predictor Helpers
+    function updateRainfallLabel(val) {
+      document.getElementById('riskRainfallVal').innerText = val + ' mm';
+      const lbl = document.getElementById('rainfallLabel');
+      const v = parseInt(val, 10);
+      if (v <= 10) lbl.innerText = 'Cerah / Berawan';
+      else if (v <= 30) lbl.innerText = 'Hujan Ringan';
+      else if (v <= 60) lbl.innerText = 'Hujan Sedang';
+      else if (v <= 100) lbl.innerText = 'Hujan Deras';
+      else lbl.innerText = 'Hujan Ekstrem / Badai';
+    }
+
+    async function executeRiskPrediction() {
+      const btn = document.getElementById('btnPredictRisk');
+      const spinner = document.getElementById('riskSpinner');
+      btn.disabled = true;
+      spinner.style.display = 'inline-block';
+
+      const payload = {
+        temperature_c: parseFloat(document.getElementById('riskTemp').value),
+        rainfall_mm: parseFloat(document.getElementById('riskRainfall').value),
+        traffic_density: parseFloat(document.getElementById('riskTraffic').value),
+        report_density: parseInt(document.getElementById('riskReports').value, 10),
+        category: document.getElementById('riskCategory').value
+      };
+
+      const t0 = performance.now();
+      try {
+        const res = await fetch(`${getApiBase()}/v1/predict-risk`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const latency = Math.round(performance.now() - t0);
+        document.getElementById('riskLatencyBadge').innerText = `${latency} ms`;
+
+        const data = await res.json();
+        renderRiskResult(data);
+      } catch (err) {
+        alert(`Gagal memanggil API: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+      }
+    }
+
+    function renderRiskResult(response) {
+      document.getElementById('riskResultEmpty').style.display = 'none';
+      document.getElementById('riskResultContent').style.display = 'block';
+      document.getElementById('jsonRisk').innerText = JSON.stringify(response, null, 2);
+
+      if (!response.success) {
+        alert(`Error: ${response.error.message}`);
+        return;
+      }
+
+      const d = response.data;
+      const prob = d.flood_risk_probability;
+      const pct = (prob * 100).toFixed(1);
+
+      document.getElementById('riskProbText').innerText = `${pct}%`;
+      const hero = document.getElementById('riskHero');
+      const badge = document.getElementById('riskLevelBadge');
+
+      if (d.stress_level === 'high' || prob >= 0.7) {
+        hero.className = 'result-hero manual';
+        hero.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(127, 29, 29, 0.4) 100%)';
+        hero.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+        badge.innerText = 'HIGH RISK (WASPADA BANJIR)';
+        badge.style.color = 'var(--accent-red)';
+      } else if (d.stress_level === 'medium' || prob >= 0.4) {
+        hero.className = 'result-hero manual';
+        badge.innerText = 'MEDIUM RISK (SIAGA)';
+        badge.style.color = 'var(--accent-amber)';
+      } else {
+        hero.className = 'result-hero approved';
+        badge.innerText = 'LOW RISK (AMAN)';
+        badge.style.color = 'var(--accent-green)';
+      }
+
+      if (d.weather_context) {
+        document.getElementById('weatherContextBox').innerHTML = `
+          Status BMKG: <strong>${d.weather_context.condition}</strong> | Curah Hujan: <strong>${d.weather_context.rainfall_mm} mm</strong> | Kelembapan: <strong>${d.weather_context.humidity_percentage}%</strong>. Wilayah berada dalam kategori risiko <strong>${d.stress_level.toUpperCase()}</strong>.
+        `;
+      }
+
+      document.getElementById('riskWeatherSummary').innerText = `${payloadTemp(d)}°C / ${d.weather_context ? d.weather_context.rainfall_mm : 0}mm`;
+    }
+
+    function payloadTemp(d) {
+      return d.weather_context ? d.weather_context.temperature_celsius : document.getElementById('riskTemp').value;
+    }
+
+    // Policy Simulator Presets
+    function setPolicyScenario(type) {
+      const prompt = document.getElementById('policyPrompt');
+      const horizon = document.getElementById('policyHorizon');
+      if (type === 'drainase') {
+        prompt.value = 'Bagaimana proyeksi dampak jika Pemkot Malang mengalokasikan anggaran Rp 1.5 Miliar untuk normalisasi gorong-gorong di sepanjang koridor Jalan Soekarno-Hatta menjelang musim hujan?';
+        horizon.value = 6;
+      } else if (type === 'trotoar') {
+        prompt.value = 'Simulasikan program revitalisasi trotoar ramah difabel dan guiding block tunanetra di sepanjang Jalan Besar Ijen dengan anggaran Rp 450 Juta.';
+        horizon.value = 4;
+      } else if (type === 'pju') {
+        prompt.value = 'Apakah efektif penggantian 200 titik PJU konvensional menjadi Smart PJU LED hemat energi di kawasan Dinoyo Lowokwaru dengan anggaran Rp 300 Juta?';
+        horizon.value = 6;
+      } else if (type === 'jalan') {
+        prompt.value = 'Simulasikan kebijakan Operasi Sapu Bersih Lubang Jalan 24 Jam serentak di 5 kecamatan Kota Malang dengan alokasi APBD Perubahan Rp 2 Miliar.';
+        horizon.value = 3;
+      }
+      document.getElementById('policyHorizonVal').innerText = horizon.value + ' Bulan';
+    }
+
+    async function executePolicySimulation() {
+      const promptText = document.getElementById('policyPrompt').value.trim();
+      if (!promptText || promptText.length < 5) {
+        alert('Silakan tuliskan skenario kebijakan minimal 5 karakter!');
+        return;
+      }
+
+      const btn = document.getElementById('btnSimulatePolicy');
+      const spinner = document.getElementById('policySpinner');
+      btn.disabled = true;
+      spinner.style.display = 'inline-block';
+
+      const payload = {
+        prompt_text: promptText,
+        time_horizon_months: parseInt(document.getElementById('policyHorizon').value, 10),
+        zone_id: 'malang-city-zone'
+      };
+
+      const t0 = performance.now();
+      try {
+        const res = await fetch(`${getApiBase()}/v1/policy-simulate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const latency = Math.round(performance.now() - t0);
+        document.getElementById('policyLatencyBadge').innerText = `${latency} ms`;
+
+        const data = await res.json();
+        renderPolicyResult(data);
+      } catch (err) {
+        alert(`Gagal menghubungi LLM: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+      }
+    }
+
+    function renderPolicyResult(response) {
+      document.getElementById('policyResultEmpty').style.display = 'none';
+      document.getElementById('policyResultContent').style.display = 'block';
+      document.getElementById('jsonPolicy').innerText = JSON.stringify(response, null, 2);
+
+      if (!response.success) {
+        alert(`Error Policy Simulator [${response.error.code}]: ${response.error.message}`);
+        return;
+      }
+
+      const d = response.data;
+      document.getElementById('policyNarrative').innerText = d.result_narrative;
+
+      if (d.result_data) {
+        const rd = d.result_data;
+        document.getElementById('polRedPct').innerText = `+${rd.estimated_incident_reduction_pct}%`;
+        document.getElementById('polBudget').innerText = `Rp ${Number(rd.budget_estimate_idr || 0).toLocaleString('id-ID')}`;
+        document.getElementById('polWeeks').innerText = `${rd.time_to_impact_weeks} Minggu`;
+        document.getElementById('polSatPct').innerText = `+${rd.public_satisfaction_increase_pct}%`;
+        document.getElementById('polTargetDept').innerText = rd.target_department || 'DPUPRPKP Kota Malang';
+
+        // Mitigations
+        const mitList = document.getElementById('polMitList');
+        mitList.innerHTML = '';
+        if (rd.risk_mitigations && rd.risk_mitigations.length > 0) {
+          rd.risk_mitigations.forEach(m => {
+            mitList.innerHTML += `<li><span class="check-icon pass">✓</span><span>${m}</span></li>`;
+          });
+        }
+      }
+
+      // Recommendations
+      const recList = document.getElementById('polRecList');
+      recList.innerHTML = '';
+      if (d.key_recommendations && d.key_recommendations.length > 0) {
+        d.key_recommendations.forEach(r => {
+          recList.innerHTML += `<li><span class="check-icon pass">✓</span><span>${r}</span></li>`;
+        });
+      }
+    }
+
+    // Toggle Raw JSON
+    function toggleRawJson(id) {
+      const box = document.getElementById(id);
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    }
+  </script>
+</body>
+</html>

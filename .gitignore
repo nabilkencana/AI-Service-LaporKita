@@ -8,10 +8,21 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
-models/*.pt
+# Keep model weights in repo for self-contained clean builds
+!models/yolov11-cls-laporkita.pt
+!models/*.json
 models/*.onnx
 models/*.bin
-models/*.json
 dataset/
 dataset_staging/
 .DS_Store
+
+# Runs & caches
+runs/
+
+# AI & Internal Prompts
+*PROMPT*
+*prompt*
+*ANTIGRAVITY*
+*antigravity*
+

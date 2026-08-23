@@ -41,7 +41,7 @@ def validate_report_timestamp(
     - Must not be excessively old (default max 30 days).
     """
     if report_time is None:
-        return True, "Timestamp tidak disertakan (diasumsikan waktu saat ini)"
+        return False, "Timestamp tidak disertakan (wajib disertakan sesuai Rules.md §1.2)"
 
     now = datetime.now(timezone.utc)
     if report_time.tzinfo is None:

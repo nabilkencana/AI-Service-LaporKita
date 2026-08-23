@@ -27,9 +27,15 @@ class VerifyReportRequest(BaseModel):
         return data
 
     @model_validator(mode="after")
-    def check_image_present(self):
+    def check_inputs(self):
         if not self.image_url and not self.image_base64:
             raise ValueError("Either image_url or image_base64 must be provided")
+        if self.claimed_category is not None:
+            from app.core.config import settings
+            if self.claimed_category not in settings.VALID_CATEGORIES:
+                raise ValueError(
+                    f"Kategori '{self.claimed_category}' tidak valid. Harus salah satu dari: {', '.join(settings.VALID_CATEGORIES)}"
+                )
         return self
 
 
@@ -39,13 +45,12 @@ class VerifyReportData(BaseModel):
     ai_confidence_score: float = Field(..., ge=0.0, le=1.0, description="Model classification confidence score (0.0 to 1.0)")
     predicted_category: str = Field(..., description="Classification category determined by model")
     is_valid: bool = Field(..., description="Whether report is automatically verified (confidence >= threshold and GPS/timestamp valid)")
-    needs_manual_review: bool = Field(..., description="True if confidence < 0.6 or GPS/timestamp anomaly (Rules.md §1.2)")
+    needs_manual_review: bool = Field(..., description="True if confidence < 0.6 or GPS/timestamp anomaly or bukan_fasilitas (Rules.md §1.2)")
     damage_severity: float = Field(..., ge=0.0, le=1.0, description="Estimated damage severity score (0.0 to 1.0)")
-    urgency_score: float = Field(..., ge=0.0, le=1.0, description="Calculated Smart Priority urgency score")
     description_auto: str = Field(..., description="Auto-generated descriptive text for the report")
     gps_valid: bool = Field(..., description="Whether GPS coordinates are inside Malang City bounds")
     timestamp_valid: bool = Field(..., description="Whether report timestamp is recent and valid")
-    class_probabilities: Optional[Dict[str, float]] = Field(default_factory=dict, description="Softmax confidence distribution across all 5 classes")
+    class_probabilities: Optional[Dict[str, float]] = Field(default_factory=dict, description="Softmax confidence distribution across all classes")
     is_placeholder: bool = Field(default=False, alias="_placeholder", serialization_alias="_placeholder", description="Indicates whether response is placeholder (False for real YOLOv11 model)")
 
 

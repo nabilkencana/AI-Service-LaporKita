@@ -89,3 +89,37 @@ async def test_predict_risk_invalid_traffic(client: AsyncClient):
     data = response.json()
     assert data["success"] is False
     assert data["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_predict_risk_unloaded_model_fail_closed(client: AsyncClient):
+    """
+    Scenario: When XGBoost model is not loaded in memory
+    Expected: HTTP 503 fail-closed with MODEL_NOT_AVAILABLE (never fake success)
+    """
+    from app.services.xgboost_service import XGBoostRiskService
+    svc = XGBoostRiskService.get_instance()
+    original_model = svc.model
+
+    try:
+        svc.model = None  # Simulate unloaded model
+        payload = {
+            "zone_id": "zone-klojen-01",
+            "report_density": 15,
+            "weather_context": {
+                "rainfall_mm": 35.0,
+                "temperature_c": 24.5,
+                "condition": "Hujan Sedang",
+                "drainage_issue_ratio": 0.35,
+            },
+            "traffic_density": 0.7,
+        }
+        response = await client.post("/v1/predict-risk", json=payload)
+        assert response.status_code == 503
+
+        data = response.json()
+        assert data["success"] is False
+        assert data["error"]["code"] == "MODEL_NOT_AVAILABLE"
+    finally:
+        svc.model = original_model
+

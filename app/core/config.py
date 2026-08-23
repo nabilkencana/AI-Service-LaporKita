@@ -32,13 +32,14 @@ class Settings(BaseSettings):
     WEIGHT_LOCATION_DENSITY: float = 0.20
     WEIGHT_CATEGORY_URGENCY: float = 0.20
 
-    # 5 Active Facility Categories (PRD & Rules.md)
+    # 5 Active Facility Categories (PRD & Rules.md) + OOD Class
     VALID_CATEGORIES: List[str] = [
         "Jalan Berlubang",
         "Lampu Jalan",
         "Rambu Lalu Lintas",
         "Trotoar",
         "Drainase",
+        "bukan_fasilitas",
     ]
 
     # Category Urgency Default Weights (0.0 to 1.0)
@@ -48,11 +49,27 @@ class Settings(BaseSettings):
         "Rambu Lalu Lintas": 0.8,
         "Lampu Jalan": 0.7,
         "Trotoar": 0.65,
+        "bukan_fasilitas": 0.0,
     }
+
+    # Internal API Authentication (SEC-NOAUTH fix)
+    INTERNAL_API_KEY: str = ""
 
     # External Model / API Keys
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL_NAME: str = "gemini-2.5-flash"
+
+    # DeepSeek API (for Policy Simulator Migration)
+    DEEPSEEK_API_KEY: str = ""
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+    DEEPSEEK_MODEL_NAME: str = "deepseek-chat"
+
+    # Security & Resource Constraints (Rules.md §2.1 & Empirical Distribution Calibrated)
+    MAX_IMAGE_SIZE_BYTES: int = 8 * 1024 * 1024  # 8 MB
+    MAX_IMAGE_PIXELS: int = 16_000_000            # Max 16 Megapixels
+    MIN_IMAGE_DIMENSION: int = 200                # Min 200px longest edge (calibrated for benchmark crops >=200px)
+    ALLOWED_CORS_ORIGINS: List[str] = ["*"]
+    ENABLE_DOCS: bool = True
 
     # Model file paths (Phases 3-5)
     CLASSIFICATION_MODEL_PATH: str = "models/yolov11-cls-laporkita.pt"

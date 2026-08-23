@@ -55,9 +55,10 @@ def test_timestamp_validation_edge_cases():
     valid, _ = validate_report_timestamp(now)
     assert valid is True
 
-    # 2. None timestamp is treated as current (valid)
-    valid, _ = validate_report_timestamp(None)
-    assert valid is True
+    # 2. None timestamp is invalid (RULES-1: must be provided per Rules.md §1.2)
+    valid, msg = validate_report_timestamp(None)
+    assert valid is False
+    assert "tidak disertakan" in msg
 
     # 3. 4 minutes in future (within 5 min tolerance) -> Valid
     valid, _ = validate_report_timestamp(now + timedelta(minutes=4))

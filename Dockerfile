@@ -24,7 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
 
-# Copy application source code and model weights
+# Copy application source code, models, and demo UI
+COPY index.html ./
 COPY app/ ./app/
 COPY models/ ./models/
 

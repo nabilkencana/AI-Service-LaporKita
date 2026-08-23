@@ -1,0 +1,146 @@
+{
+  "overall_accuracy": 0.9956,
+  "overall_accuracy_ci_95": {
+    "low": 0.9842,
+    "high": 0.9988,
+    "ci_str": "98.42% - 99.88%"
+  },
+  "total_test_samples": 457,
+  "mean_confidence": 0.9936,
+  "per_class": {
+    "Drainase": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 83,
+      "recall_ci_95": {
+        "low": 0.9558,
+        "high": 1.0,
+        "ci_str": "95.58% - 100.00%"
+      }
+    },
+    "Jalan Berlubang": {
+      "precision": 0.9737,
+      "recall": 1.0,
+      "f1_score": 0.9867,
+      "support": 74,
+      "recall_ci_95": {
+        "low": 0.9507,
+        "high": 1.0,
+        "ci_str": "95.07% - 100.00%"
+      }
+    },
+    "Lampu Jalan": {
+      "precision": 1.0,
+      "recall": 0.9877,
+      "f1_score": 0.9938,
+      "support": 81,
+      "recall_ci_95": {
+        "low": 0.9333,
+        "high": 0.9978,
+        "ci_str": "93.33% - 99.78%"
+      }
+    },
+    "Rambu Lalu Lintas": {
+      "precision": 1.0,
+      "recall": 0.9867,
+      "f1_score": 0.9933,
+      "support": 75,
+      "recall_ci_95": {
+        "low": 0.9283,
+        "high": 0.9976,
+        "ci_str": "92.83% - 99.76%"
+      }
+    },
+    "Trotoar": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 90,
+      "recall_ci_95": {
+        "low": 0.9591,
+        "high": 1.0,
+        "ci_str": "95.91% - 100.00%"
+      }
+    },
+    "bukan_fasilitas": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 54,
+      "recall_ci_95": {
+        "low": 0.9336,
+        "high": 1.0,
+        "ci_str": "93.36% - 100.00%"
+      }
+    }
+  },
+  "macro_avg": {
+    "precision": 0.9956,
+    "recall": 0.9957,
+    "f1_score": 0.9956
+  },
+  "weighted_avg": {
+    "precision": 0.9957,
+    "recall": 0.9956,
+    "f1_score": 0.9956
+  },
+  "confusion_matrix": [
+    [
+      83,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      74,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      80,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      74,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      90,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      54
+    ]
+  ],
+  "classes_order": [
+    "Drainase",
+    "Jalan Berlubang",
+    "Lampu Jalan",
+    "Rambu Lalu Lintas",
+    "Trotoar",
+    "bukan_fasilitas"
+  ]
+}

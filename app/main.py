@@ -3,7 +3,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from pathlib import Path
+from fastapi.responses import JSONResponse, FileResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
@@ -42,17 +43,17 @@ app = FastAPI(
     version=settings.VERSION,
     description="Microservice AI/ML LaporKita: Computer Vision Verification, Risk Prediction, and LLM Policy Simulator.",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url="/docs" if (settings.ENABLE_DOCS and settings.APP_ENV != "production") else None,
+    redoc_url="/redoc" if (settings.ENABLE_DOCS and settings.APP_ENV != "production") else None,
+    openapi_url="/openapi.json" if (settings.ENABLE_DOCS and settings.APP_ENV != "production") else None,
 )
 
-# CORS Configuration
+# Secure CORS Configuration (SEC-CORS Fix)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=settings.ALLOWED_CORS_ORIGINS,
+    allow_credentials=False if "*" in settings.ALLOWED_CORS_ORIGINS else True,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -137,28 +138,31 @@ async def health_check():
     from app.schemas.base import ModelsStatus
     from app.services.yolo_service import YOLOClassificationService
     from app.services.xgboost_service import XGBoostRiskService
-    from app.services.gemini_service import GeminiPolicyService
+    from app.services.deepseek_service import DeepSeekPolicyService
 
     yolo_svc = YOLOClassificationService.get_instance()
     xgb_svc = XGBoostRiskService.get_instance()
-    gemini_svc = GeminiPolicyService.get_instance()
+    llm_svc = DeepSeekPolicyService.get_instance()
 
     yolo_ready = yolo_svc.model is not None
     xgb_ready = xgb_svc.model is not None
-    gemini_ready = gemini_svc.client is not None
+    llm_configured = llm_svc.is_configured
+    llm_connected = await llm_svc.check_connectivity() if llm_configured else False
 
-    all_models_ready = yolo_ready and xgb_ready
+    all_systems_ready = yolo_ready and xgb_ready and (llm_connected or not llm_configured)
 
     models_info = ModelsStatus(
         yolo_classification_loaded=yolo_ready,
         xgboost_risk_loaded=xgb_ready,
-        gemini_configured=gemini_ready,
+        llm_configured=llm_configured,
+        llm_connected=llm_connected,
+        gemini_configured=llm_configured,
     )
 
     return APIResponse(
         success=True,
         data=HealthStatusData(
-            status="ok" if all_models_ready else "degraded",
+            status="ok" if all_systems_ready else "degraded",
             service="ai-service",
             version=settings.VERSION,
             environment=settings.APP_ENV,
@@ -181,4 +185,26 @@ app.include_router(verification_router, prefix="/api/v1")
 app.include_router(prediction_router, prefix="/api/v1")
 app.include_router(zone_metrics_router, prefix="/api/v1")
 app.include_router(policy_simulator_router, prefix="/api/v1")
+
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/", include_in_schema=False)
+@app.get("/demo", include_in_schema=False)
+@app.get("/demo/", include_in_schema=False)
+@app.get("/api/demo", include_in_schema=False)
+async def serve_demo_console():
+    """Serves the interactive web test console for manual QA & live model verification."""
+    candidates = [
+        Path("index.html"),
+        Path(__file__).resolve().parent.parent / "index.html",
+        Path(__file__).resolve().parent / "index.html",
+        Path("/app/index.html"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return FileResponse(str(p), media_type="text/html")
+    return HTMLResponse(
+        "<h2>LaporKita AI Service Online</h2><p>Visit <code>/health</code> for API status or <code>/docs</code> for Swagger UI.</p>"
+    )
 

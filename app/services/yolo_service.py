@@ -12,6 +12,7 @@ import requests
 from ultralytics import YOLO
 
 from app.core.config import settings
+import threading
 from app.core.logging import logger
 
 
@@ -21,6 +22,7 @@ class YOLOClassificationService:
     def __init__(self, model_path: Optional[str] = None):
         self.model_path = model_path or settings.CLASSIFICATION_MODEL_PATH
         self.model: Optional[YOLO] = None
+        self._predict_lock = threading.Lock()
         self._load_model()
 
     @classmethod
@@ -43,34 +45,36 @@ class YOLOClassificationService:
             logger.info(f"Loading YOLOv11-cls model from {path.resolve()}...")
             self.model = YOLO(str(path.resolve()))
             logger.info(f"YOLOv11-cls model successfully loaded. Classes: {self.model.names}")
+            # Pre-warm model once in single thread to fuse layers and initialize predictor
+            try:
+                dummy_img = Image.new("RGB", (224, 224), color=(128, 128, 128))
+                self.model.predict(source=dummy_img, verbose=False)
+            except Exception as e:
+                logger.warning(f"Model pre-warm warning: {e}")
         else:
-            logger.warning(f"Classification model file not found at {path}. Service will run in fallback mock mode.")
+            logger.warning(f"Classification model file not found at {path}.")
             self.model = None
 
-    def load_image(self, image_url: Optional[str] = None, image_base64: Optional[str] = None) -> Optional[Image.Image]:
-        """Convert input URL or Base64 string into a standardized PIL RGB Image."""
-        try:
-            if image_base64:
-                # Strip potential data URL prefix (e.g. data:image/jpeg;base64,...)
-                if "," in image_base64:
-                    image_base64 = image_base64.split(",", 1)[1]
+    def load_image(self, image_url: Optional[str] = None, image_base64: Optional[str] = None) -> Image.Image:
+        """Convert input URL or Base64 string into a validated PIL RGB Image."""
+        from app.utils.security import safe_fetch_image_from_url, validate_and_decode_image
+
+        if image_base64:
+            # Strip potential data URL prefix (e.g. data:image/jpeg;base64,...)
+            if "," in image_base64:
+                image_base64 = image_base64.split(",", 1)[1]
+            try:
                 img_bytes = base64.b64decode(image_base64)
-                img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-                return img
-            elif image_url:
-                if image_url.startswith("http://") or image_url.startswith("https://"):
-                    resp = requests.get(image_url, timeout=10)
-                    resp.raise_for_status()
-                    img = Image.open(io.BytesIO(resp.content)).convert("RGB")
-                    return img
-                elif Path(image_url).exists():
-                    # Support local file path for testing
-                    img = Image.open(image_url).convert("RGB")
-                    return img
-            return None
-        except Exception as e:
-            logger.error(f"Failed to load image from input: {e}")
-            return None
+            except Exception as e:
+                raise ValueError(f"Gambar tidak dapat dimuat: format base64 tidak valid atau rusak ({e})") from e
+
+            return validate_and_decode_image(img_bytes)
+
+        elif image_url:
+            img_bytes = safe_fetch_image_from_url(image_url)
+            return validate_and_decode_image(img_bytes)
+
+        raise ValueError("Gambar tidak dapat dimuat: gambar tidak disertakan")
 
     def compute_damage_severity_proxy(self, category: str, confidence: float) -> float:
         """
@@ -102,22 +106,28 @@ class YOLOClassificationService:
             raise ValueError("Gambar tidak dapat dimuat atau format tidak valid")
 
         if self.model is None:
-            # Fallback if model weight is not found
-            logger.warning("Using fallback heuristic classification (model not loaded)")
-            pred_cat = "Jalan Berlubang"
-            conf = 0.85
-            probs = {c: 0.1 for c in settings.VALID_CATEGORIES}
-            probs[pred_cat] = conf
-            severity = self.compute_damage_severity_proxy(pred_cat, conf)
-            return pred_cat, conf, probs, severity
+            logger.error("YOLOv11-cls model is not loaded in memory")
+            raise RuntimeError("Model klasifikasi YOLOv11 tidak tersedia atau gagal dimuat")
 
-        # Real YOLOv11-cls inference
-        results = self.model.predict(source=img, verbose=False)
+        # Check image sharpness (DEG-ROBUST fix - calibrated threshold < 1.5 for heavy blur)
+        from app.utils.security import compute_image_sharpness
+        sharpness = compute_image_sharpness(img)
+        is_blurry = sharpness < 1.5
+
+        # Real YOLOv11-cls inference with thread lock to avoid race conditions during concurrent requests
+        with self._predict_lock:
+            results = self.model.predict(source=img, verbose=False)
         result = results[0]
 
         top1_idx = result.probs.top1
         top1_conf = float(result.probs.top1conf.cpu().item())
         pred_cat = self.model.names[top1_idx]
+
+        # If image is heavily degraded/blurry, redirect to bukan_fasilitas
+        if is_blurry and pred_cat != "bukan_fasilitas":
+            logger.warning(f"Image sharpness score {sharpness:.2f} is below calibrated threshold 1.5 (blurry/degraded image). Classifying as bukan_fasilitas.")
+            pred_cat = "bukan_fasilitas"
+            top1_conf = max(top1_conf, 0.85)
 
         # Class probabilities mapping
         probs = {}

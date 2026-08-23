@@ -1,0 +1,25 @@
+{
+  "model_type": "XGBRegressor",
+  "dataset_type": "SYNTHETIC_DEMO",
+  "features": [
+    "rainfall_mm",
+    "temperature_c",
+    "report_density",
+    "traffic_density",
+    "drainage_issue_ratio",
+    "monsoon_season"
+  ],
+  "test_samples": 1200,
+  "r2_score": 0.9635,
+  "rmse": 0.049,
+  "mae": 0.0369,
+  "feature_importances": {
+    "rainfall_mm": 0.362,
+    "temperature_c": 0.0022,
+    "report_density": 0.0306,
+    "traffic_density": 0.0108,
+    "drainage_issue_ratio": 0.0208,
+    "monsoon_season": 0.5738
+  },
+  "disclaimer": "Trained on synthetic dataset for demo purposes. Requires retraining with authentic BMKG and DPUPR historical records before production deployment."
+}

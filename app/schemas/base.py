@@ -20,7 +20,9 @@ class APIResponse(BaseModel, Generic[T]):
 class ModelsStatus(BaseModel):
     yolo_classification_loaded: bool = Field(..., description="Whether YOLOv11-cls model weights are loaded in memory")
     xgboost_risk_loaded: bool = Field(..., description="Whether XGBoost risk model weights are loaded in memory")
-    gemini_configured: bool = Field(..., description="Whether Gemini LLM client is properly configured with API key")
+    llm_configured: bool = Field(default=True, description="Whether DeepSeek/LLM API key is configured")
+    llm_connected: bool = Field(default=True, description="Whether DeepSeek/LLM API endpoint is reachable via live probe")
+    gemini_configured: bool = Field(default=True, deprecated=True, description="Deprecated alias for LLM configuration status")
 
 
 class HealthStatusData(BaseModel):

@@ -15,11 +15,11 @@ class PolicySimulateRequest(BaseModel):
 
 
 class PolicyProjectionData(BaseModel):
-    estimated_incident_reduction_pct: float = Field(default=0.0, description="Estimated percentage drop in complaints/incidents")
-    budget_estimate_idr: Optional[float] = Field(default=0.0, description="Estimated budget in IDR")
-    time_to_impact_weeks: Optional[int] = Field(default=4, description="Weeks until visible public impact")
-    target_department: Optional[str] = Field(default="DPUPR Kota Malang", description="Primary executing agency")
-    public_satisfaction_increase_pct: Optional[float] = Field(default=0.0, description="Projected satisfaction gain")
+    estimated_incident_reduction_pct: float = Field(default=0.0, ge=0.0, le=100.0, description="Estimated percentage drop in complaints/incidents")
+    budget_estimate_idr: Optional[float] = Field(default=0.0, ge=0.0, description="Estimated budget in IDR")
+    time_to_impact_weeks: Optional[int] = Field(default=4, ge=1, le=52, description="Weeks until visible public impact (1 to 52 weeks)")
+    target_department: Optional[str] = Field(default="DPUPRPKP Kota Malang", description="Primary executing agency")
+    public_satisfaction_increase_pct: Optional[float] = Field(default=0.0, ge=0.0, le=100.0, description="Projected satisfaction gain")
     risk_mitigations: List[str] = Field(default_factory=list, description="Key operational risk mitigations")
 
 
@@ -35,5 +35,5 @@ class PolicySimulateData(BaseModel):
         default_factory=list,
         description="Actionable policy steps for city departments"
     )
-    model_used: str = Field(default="gemini-2.5-flash", description="LLM model identifier used for generation")
-    is_placeholder: bool = Field(default=False, alias="_placeholder", serialization_alias="_placeholder", description="Indicates whether response is placeholder (False for real Gemini response)")
+    model_used: str = Field(default="deepseek-chat", description="LLM model identifier used for generation")
+    is_placeholder: bool = Field(default=False, alias="_placeholder", serialization_alias="_placeholder", description="Indicates whether response is placeholder (False for real DeepSeek response)")
