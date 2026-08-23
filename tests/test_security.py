@@ -144,20 +144,23 @@ async def test_internal_api_key_auth_enforcement(client: AsyncClient):
         }
 
         # 1. Without header -> 401 Unauthorized
-        res_no_key = await client.post("/v1/verify", json=payload)
-        assert res_no_key.status_code == 401
+        from httpx import ASGITransport
+        from app.main import app
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as raw_client:
+            res_no_key = await raw_client.post("/v1/verify", json=payload)
+            assert res_no_key.status_code == 401
 
-        # 2. With invalid header -> 403 Forbidden
-        res_wrong_key = await client.post("/v1/verify", json=payload, headers={"X-API-Key": "wrong-key"})
-        assert res_wrong_key.status_code == 403
+            # 2. With invalid header -> 403 Forbidden
+            res_wrong_key = await raw_client.post("/v1/verify", json=payload, headers={"X-API-Key": "wrong-key"})
+            assert res_wrong_key.status_code == 403
 
-        # 3. With valid X-API-Key -> 200 OK
-        res_valid_key = await client.post("/v1/verify", json=payload, headers={"X-API-Key": test_secret})
-        assert res_valid_key.status_code == 200
+            # 3. With valid X-API-Key -> 200 OK
+            res_valid_key = await raw_client.post("/v1/verify", json=payload, headers={"X-API-Key": test_secret})
+            assert res_valid_key.status_code == 200
 
-        # 4. /health must remain public without auth -> 200 OK
-        res_health = await client.get("/health")
-        assert res_health.status_code == 200
+            # 4. /health must remain public without auth -> 200 OK
+            res_health = await raw_client.get("/health")
+            assert res_health.status_code == 200
 
     finally:
         settings.INTERNAL_API_KEY = original_key
