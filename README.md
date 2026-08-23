@@ -1,4 +1,17 @@
-# LaporKita AI Service
+# 🤖 LaporKita — AI Service
+
+<div align="center">
+
+**Microservice Python FastAPI mandiri untuk platform LaporKita — platform pelaporan kerusakan infrastruktur publik Kota Malang berbasis AI.**
+
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![YOLOv11](https://img.shields.io/badge/YOLOv11--cls-99.49%25_Acc-FF6F00?style=for-the-badge&logo=opencv&logoColor=white)](https://ultralytics.com)
+[![XGBoost](https://img.shields.io/badge/XGBoost-R²%3D0.9635-4CAF50?style=for-the-badge)](https://xgboost.readthedocs.io)
+[![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
+[![Docker](https://img.shields.io/badge/Docker-Self--Contained-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+
+</div>
 
 > **Microservice Python FastAPI** mandiri untuk platform **LaporKita** — platform pelaporan kerusakan infrastruktur publik Kota Malang berbasis AI.
 
