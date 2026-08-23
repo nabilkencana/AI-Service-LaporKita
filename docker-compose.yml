@@ -22,12 +22,12 @@ services:
       - WEIGHT_SUPPORT_COUNT=0.25
       - WEIGHT_LOCATION_DENSITY=0.20
       - WEIGHT_CATEGORY_URGENCY=0.20
-      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-}
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
-      - DEEPSEEK_BASE_URL=https://api.deepseek.com
-      - DEEPSEEK_MODEL_NAME=deepseek-chat
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      - DEEPSEEK_MODEL_NAME=${DEEPSEEK_MODEL_NAME:-deepseek-chat}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - GEMINI_MODEL_NAME=gemini-2.5-flash
+      - GEMINI_MODEL_NAME=${GEMINI_MODEL_NAME:-gemini-2.5-flash}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

@@ -5,11 +5,11 @@
 <p align="center">
   <img src="https://img.shields.io/badge/FastAPI-0.110%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/YOLOv11--cls-99.23%25%20Acc-FF6B35?style=for-the-badge&logo=pytorch&logoColor=white" />
-  <img src="https://img.shields.io/badge/XGBoost-R²%3D0.9635-F7931E?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/YOLOv11--cls-99.56%25%20Acc%20(6%20Classes)-FF6B35?style=for-the-badge&logo=pytorch&logoColor=white" />
+  <img src="https://img.shields.io/badge/XGBoost-R²%3D0.9635%20(sintetis)-F7931E?style=for-the-badge" />
   <img src="https://img.shields.io/badge/DeepSeek%20API-LLM-0066FF?style=for-the-badge&logo=deepseek&logoColor=white" />
   <img src="https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
-  <img src="https://img.shields.io/badge/Tests-32%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tests-35%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white" />
 </p>
 
 > **Microservice Python FastAPI** mandiri untuk platform **LaporKita** — platform pelaporan kerusakan infrastruktur publik **Kota Malang** berbasis AI.
@@ -1320,17 +1320,17 @@ xychart-beta
 
 ---
 
-### B. XGBoost Risk Prediction (Test Set: 1.200 Sampel Sintetis)
+### B. XGBoost Risk Prediction (Test Set: 1.200 Sampel Sintetis — Baseline)
 
-*Evaluasi pada 20% held-out dari total 6.000 sampel dataset sintetis hidrologi perkotaan.*
+*Evaluasi pada 20% held-out dari total 6.000 sampel dataset sintetis hidrologi perkotaan (Self-Consistency Baseline).*
 
 | Metrik | Nilai | Interpretasi |
 |---|---|---|
-| **R² Score** | **0.9635** | Model menjelaskan 96.35% variansi data |
+| **R² Score (Sintetis)** | **0.9635** | Model merefleksikan 96.35% variansi formula sintetis baseline |
 | **RMSE** | **0.0490** | Rata-rata deviasi probabilitas ±4.90% |
 | **MAE** | **0.0369** | Rata-rata deviasi probabilitas ±3.69% |
 | **Model Architecture** | `XGBRegressor` | `n_estimators=300, max_depth=6, learning_rate=0.05` |
-| **Training Data** | 4.800 sampel sintetis | 80% dari 6.000 sampel hidrologi |
+| **Training Data** | 4.800 sampel sintetis | 80% dari 6.000 sampel hidrologi sintetis |
 
 ```mermaid
 xychart-beta
