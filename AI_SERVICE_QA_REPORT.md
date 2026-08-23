@@ -847,3 +847,32 @@ Data uji (users/reports/categories) sudah dibersihkan dari DB.
 Foto asing dengan kemiripan visual SANGAT tinggi (confidence >= 0.85, mis. 0.90) masih bisa
 auto-verified. Mitigasi penuh: sampel negatif dunia nyata pada retrain berikutnya
 (didokumentasikan di LIMITATIONS.md §3.6).
+
+---
+
+# 17. OOD Guard Final — Retrain dengan Sampel Negatif Dunia Nyata (Hermes, Step 3b)
+
+## 17.1 Eksekusi
+- +210 foto ASLI dunia nyata (picsum: lanskap/objek/arsitektur) ditambahkan ke
+  kelas "bukan_fasilitas" (total 560: 350 sintetis + 210 nyata)
+- `rebuild_clean_dataset.py`: re-cluster + re-split (leak dHash<=4 = 0) → train 2188 / val 433 / test 508
+- Retrain 6 kelas (20 epoch, MPS) → akurasi **99.02%** (503/508), CI 97.72–99.58%,
+  bukan_fasilitas F1 0.98 (recall 0.97, precision 0.99)
+
+## 17.2 Verifikasi Live (container produksi)
+| Input | Round 2 | Round 3 (setelah) |
+|---|---|---|
+| picsum-42 | Rambu 0.73 auto | bukan_fasilitas 1.00 invalid |
+| picsum-100 | Rambu 0.90 auto | bukan_fasilitas 1.00 invalid |
+| picsum-101 | JB 0.99 auto | bukan_fasilitas 0.95 invalid |
+| picsum-102 | Lampu 0.74 auto | bukan_fasilitas 0.73 invalid |
+| picsum-104 | Drainase 0.52 | bukan_fasilitas 0.99 invalid |
+| abu-abu/noise | — | bukan_fasilitas invalid |
+
+Kelas asli tidak regresi: Rambu/JB/Trotoar test → benar, conf 1.0, is_valid=true.
+
+## 17.3 Status
+Celah OOD foto asing ber-confidence tinggi TERTUTUP. Batas yang tersisa hanya
+foto yang visualnya nyaris identik dengan kelas asli (dimitigasi aturan
+dua-ambang 0.6/0.85). Semua artefak di-commit: weights, metrics, training_report,
+skrip `scripts/download_real_negatives.py`.
