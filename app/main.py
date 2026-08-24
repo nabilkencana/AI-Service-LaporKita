@@ -96,7 +96,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         data=None,
         error=APIError(
             code=f"HTTP_{exc.status_code}",
-            message=str(exc.detail),
+            message=exc.detail,
         ),
     )
     return JSONResponse(
