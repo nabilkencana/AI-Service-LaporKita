@@ -39,6 +39,23 @@ class VerifyReportRequest(BaseModel):
         return self
 
 
+class AuthenticitySnapshot(BaseModel):
+    is_authentic: bool = Field(default=True, description="True if image has no AI tampering or inpainting detected")
+    authenticity_score: float = Field(default=0.95, ge=0.0, le=1.0, description="Image authenticity confidence score (0.0 to 1.0)")
+    tampering_detected: bool = Field(default=False, description="True if ELA or noise anomaly indicates AI inpainting/tampering")
+    tampering_indicators: list[str] = Field(default_factory=list, description="List of detected digital anomalies")
+    assessment_summary: str = Field(default="Citra terverifikasi otentik", description="Summary of digital forensics analysis")
+
+
+class LocationVerificationSnapshot(BaseModel):
+    is_location_consistent: bool = Field(default=True, description="True if coordinates match physical road landscape")
+    location_match_confidence: float = Field(default=0.90, ge=0.0, le=1.0, description="Confidence of visual/geospatial location match")
+    verified_address: str = Field(default="Kota Malang, Jawa Timur", description="Resolved street/district address")
+    district_name: str = Field(default="Kota Malang", description="Malang municipal district name")
+    street_view_available: bool = Field(default=True, description="Whether Google Street View reference exists")
+    location_audit_notes: str = Field(default="", description="Notes from spatial cross-verification")
+
+
 class VerifyReportData(BaseModel):
     model_config = ConfigDict(populate_by_name=True, serialize_by_alias=True)
 
@@ -51,6 +68,8 @@ class VerifyReportData(BaseModel):
     gps_valid: bool = Field(..., description="Whether GPS coordinates are inside Malang City bounds")
     timestamp_valid: bool = Field(..., description="Whether report timestamp is recent and valid")
     class_probabilities: Optional[Dict[str, float]] = Field(default_factory=dict, description="Softmax confidence distribution across all classes")
+    authenticity: Optional[AuthenticitySnapshot] = Field(default_factory=AuthenticitySnapshot, description="Digital tampering & AI inpainting forensics")
+    location_verification: Optional[LocationVerificationSnapshot] = Field(default_factory=LocationVerificationSnapshot, description="Google Maps & Street View location cross-check")
     is_placeholder: bool = Field(default=False, alias="_placeholder", serialization_alias="_placeholder", description="Indicates whether response is placeholder (False for real YOLOv11 model)")
 
 
@@ -65,4 +84,6 @@ class VerifyReportNestJSData(BaseModel):
     is_valid_timestamp: bool = Field(..., description="Whether report timestamp is recent and valid")
     damage_severity: float = Field(..., ge=0.0, le=1.0, description="Estimated damage severity score (0.0 to 1.0)")
     reason: str = Field(..., description="Human-readable verification decision reason")
+    is_authentic: bool = Field(default=True, description="True if no digital tampering/AI inpainting detected")
+    verified_address: Optional[str] = Field(default=None, description="Resolved physical street address in Malang")
     is_mock: bool = Field(default=False, description="False for real YOLOv11 model inference")
