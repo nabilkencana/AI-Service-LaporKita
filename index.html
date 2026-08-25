@@ -597,6 +597,10 @@
           <span style="color: var(--text-muted); margin-right: 6px;">API:</span>
           <input type="text" id="apiBaseUrl" value="http://localhost:8000" placeholder="http://localhost:8000" />
         </div>
+        <div class="api-url-box">
+          <span style="color: var(--text-muted); margin-right: 6px;">Key:</span>
+          <input type="password" id="apiKeyInput" value="laporkita-a0de63d362f6bb7e9b7fa125a0452196" placeholder="X-API-Key" style="width: 150px; background: transparent; border: none; color: #fff; outline: none; font-size: 13px;" />
+        </div>
         <div class="status-pill" id="healthPill">
           <div class="status-dot" id="healthDot"></div>
           <span id="healthLabel">Checking...</span>
@@ -1172,9 +1176,12 @@
       
       // Load sample images from json if available
       try {
-        const res = await fetch('app/sample_images.json');
+        const res = await fetch(`${getApiBase()}/sample_images.json`);
         if (res.ok) {
           sampleImages = await res.json();
+        } else {
+          const res2 = await fetch('app/sample_images.json');
+          if (res2.ok) sampleImages = await res2.json();
         }
       } catch (e) {
         console.log('Sample images will be loaded dynamically.');
@@ -1187,6 +1194,15 @@
     function getApiBase() {
       const url = document.getElementById('apiBaseUrl').value.trim();
       return url.replace(/\/+$/, '');
+    }
+
+    function getApiHeaders(extraHeaders = {}) {
+      const headers = { ...extraHeaders };
+      const apiKey = (document.getElementById('apiKeyInput')?.value || '').trim();
+      if (apiKey) {
+        headers['X-API-Key'] = apiKey;
+      }
+      return headers;
     }
 
     // Health Check Probe
@@ -1254,7 +1270,7 @@
 
       // If sample_images.json wasn't preloaded, fetch it
       try {
-        const res = await fetch('app/sample_images.json');
+        const res = await fetch(`${getApiBase()}/sample_images.json`);
         if (res.ok) {
           sampleImages = await res.json();
           if (sampleImages[category]) {
@@ -1312,7 +1328,7 @@
       try {
         const res = await fetch(`${getApiBase()}/v1/verify`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getApiHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(payload)
         });
 
@@ -1447,7 +1463,7 @@
       try {
         const res = await fetch(`${getApiBase()}/v1/predict-risk`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getApiHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(payload)
         });
 
@@ -1553,7 +1569,7 @@
       try {
         const res = await fetch(`${getApiBase()}/v1/policy-simulate`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getApiHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(payload)
         });
 

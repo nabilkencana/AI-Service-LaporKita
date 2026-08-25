@@ -208,3 +208,18 @@ async def serve_demo_console():
         "<h2>LaporKita AI Service Online</h2><p>Visit <code>/health</code> for API status or <code>/docs</code> for Swagger UI.</p>"
     )
 
+
+@app.get("/app/sample_images.json", include_in_schema=False)
+@app.get("/sample_images.json", include_in_schema=False)
+async def serve_sample_images():
+    """Serves sample image presets for the demo web console."""
+    candidates = [
+        Path("app/sample_images.json"),
+        Path(__file__).resolve().parent / "sample_images.json",
+        Path("/app/app/sample_images.json"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return FileResponse(str(p), media_type="application/json")
+    return JSONResponse(status_code=404, content={"error": "sample_images.json not found"})
+
