@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from fastapi import APIRouter, status, Depends
 from fastapi.responses import JSONResponse
 from app.schemas.base import APIResponse, APIError
@@ -9,6 +10,7 @@ from app.core.security import verify_internal_api_key
 from app.services.yolo_service import YOLOClassificationService
 from app.services.authenticity_service import ImageAuthenticityService
 from app.services.streetview_service import StreetViewVerificationService
+from app.services.active_learning_service import ActiveLearningService
 from app.utils.gps_validator import is_within_malang_bbox, validate_report_timestamp
 
 router = APIRouter(prefix="/verify", tags=["AI Verification"], dependencies=[Depends(verify_internal_api_key)])
@@ -170,6 +172,24 @@ async def _run_verification(payload: VerifyReportRequest) -> dict:
         "density_component": density_comp,
         "urgency_component": urgency_comp,
     }
+
+    # 9. Auto-Ingest Verified Detection into Active Learning Training Pool
+    if (payload.image_base64 or payload.image_url) and is_authentic and gps_is_valid:
+        try:
+            active_svc = ActiveLearningService.get_instance()
+            await asyncio.to_thread(
+                active_svc.ingest_sample,
+                image_base64=payload.image_base64,
+                image_url=payload.image_url,
+                verified_category=predicted_category,
+                original_prediction=payload.claimed_category or predicted_category,
+                confidence_score=ai_confidence_score,
+                report_id=f"auto_{int(datetime.utcnow().timestamp())}",
+                operator_notes="Otomatis diarsipkan ke dataset saat deteksi AI berhasil",
+                source="ai_auto_detection",
+            )
+        except Exception as ex:
+            logger.warning(f"Active learning auto-ingestion warning: {ex}")
 
     return {
         "ai_confidence_score": ai_confidence_score,

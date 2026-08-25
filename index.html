@@ -1155,16 +1155,31 @@
 
         <div class="glass-panel">
           <div class="card-header">
-            <h2>📜 Tautan Dokumentasi & Laporan</h2>
+            <h2>🧠 Active Learning & Continuous Training Dataset Pool</h2>
+            <button class="chip-btn" onclick="fetchActiveLearningStats()">🔄 Update Stats</button>
           </div>
           <div class="card-body">
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-              LaporKita AI Service dibangun dengan kepatuhan penuh terhadap transparansi ilmiah dan kejujuran metrik.
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+              Setiap foto yang berhasil dideteksi AI otomatis disimpan ke dataset latih terstruktur untuk continuous training YOLOv11.
             </p>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              <a href="README.md" target="_blank" class="chip-btn" style="text-decoration: none; padding: 12px; display: block;">📖 Buka README.md (Arsitektur & Spesifikasi Lengkap)</a>
-              <a href="LIMITATIONS.md" target="_blank" class="chip-btn" style="text-decoration: none; padding: 12px; display: block;">⚠️ Buka LIMITATIONS.md (Laporan Batasan Teknis Ilmiah)</a>
-              <a href="training_report.md" target="_blank" class="chip-btn" style="text-decoration: none; padding: 12px; display: block;">📊 Buka training_report.md (Confusion Matrix & Per-Class F1)</a>
+            <div class="metric-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 16px;">
+              <div class="metric-card">
+                <div class="metric-label">Total Sampel Tersimpan</div>
+                <div class="metric-value highlight" id="alTotalSamples">-</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Status Retraining</div>
+                <div class="metric-value" id="alRetrainStatus" style="font-size: 14px; color: var(--accent-green);">Collecting Data</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Distribusi Sampel Latih Baru:</label>
+              <div id="alClassBreakdown" style="font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: var(--text-muted);">
+                Memuat data...
+              </div>
+            </div>
+            <div style="margin-top: 16px;">
+              <a href="README.md" target="_blank" class="chip-btn" style="text-decoration: none; padding: 10px; display: block; text-align: center;">📖 Buka README.md (Arsitektur MLOps & Spesifikasi)</a>
             </div>
           </div>
         </div>
@@ -1716,6 +1731,33 @@
       const box = document.getElementById(id);
       box.style.display = box.style.display === 'block' ? 'none' : 'block';
     }
+
+    async function fetchActiveLearningStats() {
+      try {
+        const res = await fetch(`${getApiBase()}/v1/training/dataset-stats`, {
+          headers: getApiHeaders()
+        });
+        if (!res.ok) return;
+        const body = await res.json();
+        if (body.success && body.data) {
+          const d = body.data;
+          document.getElementById('alTotalSamples').innerText = `${d.total_samples} Sampel`;
+          document.getElementById('alRetrainStatus').innerText = d.ready_for_retraining ? 'Siap Retraining' : 'Collecting Data';
+          document.getElementById('alRetrainStatus').style.color = d.ready_for_retraining ? 'var(--accent-green)' : 'var(--primary)';
+          
+          let html = '';
+          for (const [cls, count] of Object.entries(d.class_distribution || {})) {
+            html += `<div>• <strong>${cls}</strong>: ${count} sampel</div>`;
+          }
+          document.getElementById('alClassBreakdown').innerHTML = html || 'Belum ada sampel.';
+        }
+      } catch (e) {
+        console.log('Error fetching active learning stats:', e);
+      }
+    }
+
+    // Auto-fetch stats on page load
+    setTimeout(fetchActiveLearningStats, 1000);
   </script>
 </body>
 </html>
