@@ -173,3 +173,16 @@ class ActiveLearningService:
             "dataset_directory": str(self.base_dir),
             "ready_for_retraining": total_samples >= 20,
         }
+
+    def create_dataset_zip(self) -> io.BytesIO:
+        """Packages the labeled dataset directory and metadata into a zip in memory."""
+        import zipfile
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for root, dirs, files in os.walk(self.base_dir):
+                for file in files:
+                    file_path = Path(root) / file
+                    rel_path = file_path.relative_to(self.base_dir)
+                    zip_file.write(file_path, arcname=str(rel_path))
+        zip_buffer.seek(0)
+        return zip_buffer

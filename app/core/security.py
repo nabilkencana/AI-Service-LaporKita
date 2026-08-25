@@ -4,7 +4,7 @@ Enforces internal service-to-service API key authentication on protected /v1/* e
 """
 
 from typing import Optional
-from fastapi import Header, HTTPException, status, Security
+from fastapi import Header, HTTPException, status, Security, Query
 from fastapi.security import APIKeyHeader
 from app.core.config import settings
 from app.core.logging import logger
@@ -15,17 +15,11 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 async def verify_internal_api_key(
     x_api_key: Optional[str] = Security(api_key_header),
     authorization: Optional[str] = Header(default=None),
+    key: Optional[str] = Query(default=None),
 ) -> str:
     """
     Verify internal API Key for service-to-service communication.
-    Accepts key via 'X-API-Key' header or 'Authorization: Bearer <key>'.
-    
-    Rules:
-    - If INTERNAL_API_KEY is configured:
-      - Missing key -> HTTP 401 Unauthorized
-      - Invalid key -> HTTP 403 Forbidden
-    - If INTERNAL_API_KEY is empty string (dev mode without auth):
-      - Bypasses check with a warning log
+    Accepts key via 'X-API-Key' header, 'Authorization: Bearer <key>', or query '?key=<key>'.
     """
     expected_key = settings.INTERNAL_API_KEY
 
@@ -34,7 +28,7 @@ async def verify_internal_api_key(
         return "dev-unprotected"
 
     # Extract provided key
-    provided_key = x_api_key
+    provided_key = x_api_key or key
     if not provided_key and authorization:
         if authorization.startswith("Bearer "):
             provided_key = authorization.split(" ", 1)[1]

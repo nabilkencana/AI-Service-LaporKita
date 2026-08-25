@@ -83,3 +83,39 @@ async def get_dataset_stats():
         data=data,
         error=None,
     )
+
+
+from fastapi.responses import StreamingResponse, FileResponse
+from pathlib import Path
+
+@router.get(
+    "/download-dataset",
+    summary="Download the entire gathered Active Learning dataset as a ZIP archive"
+)
+async def download_dataset_zip():
+    """
+    Downloads all ingested training images and JSONL metadata packaged in a .zip file.
+    """
+    service = ActiveLearningService.get_instance()
+    zip_buffer = await asyncio.to_thread(service.create_dataset_zip)
+
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=laporkita_active_learning_dataset.zip"}
+    )
+
+
+@router.get(
+    "/samples/{class_name}/{filename}",
+    summary="View or download an individual training image sample"
+)
+async def get_training_sample_image(class_name: str, filename: str):
+    """
+    Serves the image file for viewing in browser.
+    """
+    service = ActiveLearningService.get_instance()
+    file_path = service.labeled_dir / class_name / filename
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File gambar tidak ditemukan")
+    return FileResponse(file_path, media_type="image/jpeg")

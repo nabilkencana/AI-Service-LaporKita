@@ -1178,8 +1178,9 @@
                 Memuat data...
               </div>
             </div>
-            <div style="margin-top: 16px;">
-              <a href="README.md" target="_blank" class="chip-btn" style="text-decoration: none; padding: 10px; display: block; text-align: center;">📖 Buka README.md (Arsitektur MLOps & Spesifikasi)</a>
+            <div style="margin-top: 16px; display: flex; gap: 8px;">
+              <button class="chip-btn" style="flex: 1; padding: 10px; background: rgba(0, 242, 254, 0.15); border-color: var(--primary); color: #fff; font-weight: 700;" onclick="downloadDatasetZip()">📥 Download Dataset ZIP</button>
+              <a href="README.md" target="_blank" class="chip-btn" style="text-decoration: none; padding: 10px 16px; display: flex; align-items: center;">📖 Docs</a>
             </div>
           </div>
         </div>
@@ -1754,6 +1755,11 @@
       } catch (e) {
         console.log('Error fetching active learning stats:', e);
       }
+    }
+
+    function downloadDatasetZip() {
+      const key = getApiKey();
+      window.open(`${getApiBase()}/v1/training/download-dataset?key=${encodeURIComponent(key)}`, '_blank');
     }
 
     // Auto-fetch stats on page load
