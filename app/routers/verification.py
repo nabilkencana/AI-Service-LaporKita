@@ -145,12 +145,40 @@ async def _run_verification(payload: VerifyReportRequest) -> dict:
                 f"gps_valid={gps_is_valid}, timestamp_valid={timestamp_is_valid}"
             )
 
+    # 8. Compute Smart Priority Score Decomposition (Rules.md §1.3)
+    support_raw = payload.support_count or 0
+    density_raw = payload.report_density or 1
+    cat_weights = {
+        "Jalan Berlubang": 1.5,
+        "Drainase": 1.4,
+        "Rambu Lalu Lintas": 1.3,
+        "Lampu Jalan": 1.2,
+        "Trotoar": 1.0,
+        "bukan_fasilitas": 0.0,
+    }
+    cat_weight = cat_weights.get(predicted_category, 1.0)
+
+    severity_comp = round(35.0 * damage_severity, 2)
+    support_comp = round(25.0 * min(support_raw / 100.0, 1.0), 2)
+    density_comp = round(20.0 * min(density_raw / 10.0, 1.0), 2)
+    urgency_comp = round(20.0 * min(cat_weight / 1.5, 1.0), 2)
+    smart_priority = round(severity_comp + support_comp + density_comp + urgency_comp, 1)
+
+    scoring_details = {
+        "severity_component": severity_comp,
+        "support_component": support_comp,
+        "density_component": density_comp,
+        "urgency_component": urgency_comp,
+    }
+
     return {
         "ai_confidence_score": ai_confidence_score,
         "predicted_category": predicted_category,
         "is_valid": is_valid,
         "needs_manual_review": needs_manual_review,
         "damage_severity": damage_severity,
+        "smart_priority_score": smart_priority,
+        "scoring_details": scoring_details,
         "description_auto": description_auto,
         "gps_valid": gps_is_valid,
         "timestamp_valid": timestamp_is_valid,
@@ -203,6 +231,8 @@ async def verify_report(payload: VerifyReportRequest):
         is_valid=result["is_valid"],
         needs_manual_review=result["needs_manual_review"],
         damage_severity=result["damage_severity"],
+        smart_priority_score=result["smart_priority_score"],
+        scoring_details=result["scoring_details"],
         description_auto=result["description_auto"],
         gps_valid=result["gps_valid"],
         timestamp_valid=result["timestamp_valid"],

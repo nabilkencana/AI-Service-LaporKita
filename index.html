@@ -1425,10 +1425,25 @@
       if (txtAuth) txtAuth.innerText = auth.assessment_summary || (isAuthValid ? 'Citra terverifikasi otentik: Tidak ditemukan anomali kompresi atau manipulasi digital AI.' : 'Peringatan: Ditemukan indikasi manipulasi digital.');
       if (txtAddr) txtAddr.innerText = loc.verified_address || 'Kota Malang, Jawa Timur';
 
-      // Metrics
+      // Metrics & Smart Priority (Rules.md §1.3)
+      const supportVal = parseInt(document.getElementById('supportCount')?.value || 15, 10);
+      const catWeights = { 'Jalan Berlubang': 1.5, 'Drainase': 1.4, 'Rambu Lalu Lintas': 1.3, 'Lampu Jalan': 1.2, 'Trotoar': 1.0, 'bukan_fasilitas': 0.0 };
+      const catW = catWeights[d.predicted_category] || 1.0;
+
+      const sc = d.scoring_details || {
+        severity_component: 35.0 * (d.damage_severity || 0.0),
+        support_component: 25.0 * Math.min(supportVal / 100.0, 1.0),
+        density_component: 20.0 * 0.3,
+        urgency_component: 20.0 * Math.min(catW / 1.5, 1.0)
+      };
+
+      const finalPriority = d.smart_priority_score !== undefined && d.smart_priority_score !== null
+        ? d.smart_priority_score
+        : Number((sc.severity_component + sc.support_component + sc.density_component + sc.urgency_component).toFixed(1));
+
       document.getElementById('resPredCat').innerText = d.predicted_category;
-      document.getElementById('resSeverity').innerText = d.damage_severity.toFixed(3);
-      document.getElementById('resPriority').innerText = `${d.smart_priority_score} / 100`;
+      document.getElementById('resSeverity').innerText = (d.damage_severity || 0.0).toFixed(3);
+      document.getElementById('resPriority').innerText = `${finalPriority} / 100`;
 
       // Probability List (6 classes)
       const container = document.getElementById('probListContainer');
@@ -1456,13 +1471,10 @@
       }
 
       // Priority Decomposition
-      if (d.scoring_details) {
-        const sc = d.scoring_details;
-        document.getElementById('decompSev').innerText = `${sc.severity_component.toFixed(1)} / 35`;
-        document.getElementById('decompSup').innerText = `${sc.support_component.toFixed(1)} / 25`;
-        document.getElementById('decompDen').innerText = `${sc.density_component.toFixed(1)} / 20`;
-        document.getElementById('decompUrg').innerText = `${sc.urgency_component.toFixed(1)} / 20`;
-      }
+      document.getElementById('decompSev').innerText = `${sc.severity_component.toFixed(1)} / 35`;
+      document.getElementById('decompSup').innerText = `${sc.support_component.toFixed(1)} / 25`;
+      document.getElementById('decompDen').innerText = `${sc.density_component.toFixed(1)} / 20`;
+      document.getElementById('decompUrg').innerText = `${sc.urgency_component.toFixed(1)} / 20`;
     }
 
     // Risk Predictor Helpers

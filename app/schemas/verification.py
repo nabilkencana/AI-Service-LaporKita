@@ -12,6 +12,8 @@ class VerifyReportRequest(BaseModel):
     timestamp: Optional[datetime] = Field(default=None, description="Capture timestamp of photo/report")
     device_hint_category: Optional[str] = Field(default=None, description="On-device classification hint")
     device_hint_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="On-device confidence score")
+    support_count: Optional[int] = Field(default=0, ge=0, description="Citizen support upvotes for smart priority")
+    report_density: Optional[int] = Field(default=1, ge=0, description="Active reports density in area")
 
     @model_validator(mode="before")
     @classmethod
@@ -68,6 +70,8 @@ class VerifyReportData(BaseModel):
     gps_valid: bool = Field(..., description="Whether GPS coordinates are inside Malang City bounds")
     timestamp_valid: bool = Field(..., description="Whether report timestamp is recent and valid")
     class_probabilities: Optional[Dict[str, float]] = Field(default_factory=dict, description="Softmax confidence distribution across all classes")
+    smart_priority_score: Optional[float] = Field(default=None, description="Calculated Smart Priority score (0.0 to 100.0)")
+    scoring_details: Optional[Dict[str, float]] = Field(default_factory=dict, description="Decomposition of Smart Priority score components")
     authenticity: Optional[AuthenticitySnapshot] = Field(default_factory=AuthenticitySnapshot, description="Digital tampering & AI inpainting forensics")
     location_verification: Optional[LocationVerificationSnapshot] = Field(default_factory=LocationVerificationSnapshot, description="Google Maps & Street View location cross-check")
     is_placeholder: bool = Field(default=False, alias="_placeholder", serialization_alias="_placeholder", description="Indicates whether response is placeholder (False for real YOLOv11 model)")
