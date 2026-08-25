@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "LaporKita AI Service \u2014 API Collection (FastAPI & ML Engine)",
+    "name": "LaporKita AI Service — API Collection (FastAPI & ML Engine)",
     "_postman_id": "87e8f65c-3ee9-47d7-bfda-c00aabfaecf6",
     "description": "Koleksi lengkap Postman untuk LaporKita AI Service (FastAPI + YOLOv11-cls + XGBoost + DeepSeek LLM). Mendukung endpoint Canonical Envelope (/v1/*) dan NestJS Compatibility (/api/v1/*).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -10,7 +10,7 @@
       "name": "01 - Health & Readiness",
       "item": [
         {
-          "name": "GET /health \u2014 Service & Model Readiness",
+          "name": "GET /health — Service & Model Readiness",
           "request": {
             "method": "GET",
             "header": [
@@ -51,7 +51,7 @@
           ]
         },
         {
-          "name": "GET /demo \u2014 Interactive Web Test Console",
+          "name": "GET /demo — Interactive Web Test Console",
           "request": {
             "method": "GET",
             "header": [],
@@ -84,7 +84,7 @@
       "name": "02 - AI Verification (Canonical /v1/verify)",
       "item": [
         {
-          "name": "POST /v1/verify \u2014 Jalan Berlubang",
+          "name": "POST /v1/verify — Jalan Berlubang",
           "request": {
             "method": "POST",
             "header": [
@@ -137,7 +137,7 @@
           ]
         },
         {
-          "name": "POST /v1/verify \u2014 Trotoar",
+          "name": "POST /v1/verify — Trotoar",
           "request": {
             "method": "POST",
             "header": [
@@ -190,7 +190,7 @@
           ]
         },
         {
-          "name": "POST /v1/verify \u2014 Lampu Jalan",
+          "name": "POST /v1/verify — Lampu Jalan",
           "request": {
             "method": "POST",
             "header": [
@@ -243,7 +243,7 @@
           ]
         },
         {
-          "name": "POST /v1/verify \u2014 Rambu Lalu Lintas",
+          "name": "POST /v1/verify — Rambu Lalu Lintas",
           "request": {
             "method": "POST",
             "header": [
@@ -296,7 +296,7 @@
           ]
         },
         {
-          "name": "POST /v1/verify \u2014 Drainase",
+          "name": "POST /v1/verify — Drainase",
           "request": {
             "method": "POST",
             "header": [
@@ -349,7 +349,7 @@
           ]
         },
         {
-          "name": "POST /v1/verify \u2014 Boundary: Outside Malang GPS",
+          "name": "POST /v1/verify — Boundary: Outside Malang GPS",
           "request": {
             "method": "POST",
             "header": [
@@ -399,7 +399,7 @@
           ]
         },
         {
-          "name": "POST /v1/verify \u2014 Missing Timestamp (RULES-1)",
+          "name": "POST /v1/verify — Missing Timestamp (RULES-1)",
           "request": {
             "method": "POST",
             "header": [
@@ -448,7 +448,7 @@
           ]
         },
         {
-          "name": "POST /v1/verify \u2014 Corrupted Base64 Image (422)",
+          "name": "POST /v1/verify — Corrupted Base64 Image (422)",
           "request": {
             "method": "POST",
             "header": [
@@ -497,7 +497,7 @@
           ]
         },
         {
-          "name": "POST /v1/verify \u2014 Invalid Category Name (422)",
+          "name": "POST /v1/verify — Invalid Category Name (422)",
           "request": {
             "method": "POST",
             "header": [
@@ -539,6 +539,114 @@
               }
             }
           ]
+        },
+        {
+          "name": "POST /v1/verify — Anti-Fraud & Image Authenticity Forensics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image_base64\": \"{{sample_image_b64}}\",\n  \"claimed_category\": \"Jalan Berlubang\",\n  \"latitude\": -7.9431,\n  \"longitude\": 112.6148,\n  \"timestamp\": \"2026-08-25T13:00:00Z\",\n  \"support_count\": 25,\n  \"report_density\": 4\n}"
+            },
+            "description": "Verifikasi citra dengan analisis forensik digital multi-lapis: Error Level Analysis (ELA), sensor noise uniformity, dan deteksi manipulasi/inpainting AI."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Authenticity Forensics Snapshot Present\", function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.data).to.have.property(\"authenticity\");",
+                  "  pm.expect(body.data.authenticity).to.have.property(\"is_authentic\");",
+                  "  pm.expect(body.data.authenticity).to.have.property(\"authenticity_score\");",
+                  "  pm.expect(body.data.authenticity).to.have.property(\"tampering_detected\");",
+                  "});",
+                  "pm.test(\"Smart Priority Decomposition Present\", function () {",
+                  "  pm.expect(body.data).to.have.property(\"smart_priority_score\");",
+                  "  pm.expect(body.data).to.have.property(\"scoring_details\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /v1/verify — Google Maps & Street View Location Cross-Check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image_base64\": \"{{sample_image_b64}}\",\n  \"claimed_category\": \"Jalan Berlubang\",\n  \"latitude\": -7.9431,\n  \"longitude\": 112.6148,\n  \"timestamp\": \"2026-08-25T13:00:00Z\"\n}"
+            },
+            "description": "Cross-check lokasi jalan fisik dengan Google Maps Reverse Geocoding, Google Street View Metadata API, dan 5 Kecamatan Kota Malang Geofencing."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Location Verification Snapshot Present\", function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.data).to.have.property(\"location_verification\");",
+                  "  pm.expect(body.data.location_verification).to.have.property(\"is_location_consistent\");",
+                  "  pm.expect(body.data.location_verification).to.have.property(\"verified_address\");",
+                  "  pm.expect(body.data.location_verification).to.have.property(\"district_name\");",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -546,7 +654,7 @@
       "name": "03 - AI Verification (NestJS Compat /api/v1/verify)",
       "item": [
         {
-          "name": "POST /api/v1/verify \u2014 Flat Response for NestJS Backend",
+          "name": "POST /api/v1/verify — Flat Response for NestJS Backend",
           "request": {
             "method": "POST",
             "header": [
@@ -605,7 +713,7 @@
       "name": "04 - Risk Prediction (Canonical /v1/predict-risk)",
       "item": [
         {
-          "name": "POST /v1/predict-risk \u2014 Standard Risk Prediction",
+          "name": "POST /v1/predict-risk — Standard Risk Prediction",
           "request": {
             "method": "POST",
             "header": [
@@ -658,7 +766,7 @@
           ]
         },
         {
-          "name": "POST /v1/predict-risk \u2014 Zero / Low Stress Baseline",
+          "name": "POST /v1/predict-risk — Zero / Low Stress Baseline",
           "request": {
             "method": "POST",
             "header": [
@@ -706,7 +814,7 @@
           ]
         },
         {
-          "name": "POST /v1/predict-risk \u2014 Validation Error (traffic > 1.0)",
+          "name": "POST /v1/predict-risk — Validation Error (traffic > 1.0)",
           "request": {
             "method": "POST",
             "header": [
@@ -755,7 +863,7 @@
       "name": "05 - Risk Prediction (NestJS Compat /predict/zone-metrics)",
       "item": [
         {
-          "name": "POST /v1/predict/zone-metrics \u2014 Flat Zone Metrics",
+          "name": "POST /v1/predict/zone-metrics — Flat Zone Metrics",
           "request": {
             "method": "POST",
             "header": [
@@ -808,7 +916,7 @@
           ]
         },
         {
-          "name": "POST /api/v1/predict/zone-metrics \u2014 Dual Prefix Compat",
+          "name": "POST /api/v1/predict/zone-metrics — Dual Prefix Compat",
           "request": {
             "method": "POST",
             "header": [
@@ -859,7 +967,7 @@
       "name": "06 - Policy Simulator",
       "item": [
         {
-          "name": "POST /v1/policy-simulate \u2014 LLM Scenario Simulation",
+          "name": "POST /v1/policy-simulate — LLM Scenario Simulation",
           "request": {
             "method": "POST",
             "header": [
@@ -913,7 +1021,7 @@
           ]
         },
         {
-          "name": "POST /v1/policy-simulate \u2014 Validation: Prompt Too Short (<10 chars)",
+          "name": "POST /v1/policy-simulate — Validation: Prompt Too Short (<10 chars)",
           "request": {
             "method": "POST",
             "header": [
@@ -957,7 +1065,7 @@
           ]
         },
         {
-          "name": "POST /v1/policy-simulate \u2014 Validation: Prompt Too Long (>2000 chars)",
+          "name": "POST /v1/policy-simulate — Validation: Prompt Too Long (>2000 chars)",
           "request": {
             "method": "POST",
             "header": [
@@ -1175,6 +1283,250 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status code is 422 Unprocessable Content\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 - Active Learning & Continuous MLOps",
+      "item": [
+        {
+          "name": "POST /v1/training/ingest-sample — Ingest Verified Sample (Ground Truth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/training/ingest-sample",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "training",
+                "ingest-sample"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image_base64\": \"{{sample_image_b64}}\",\n  \"verified_category\": \"Jalan Berlubang\",\n  \"original_prediction\": \"Jalan Berlubang\",\n  \"confidence_score\": 0.98,\n  \"report_id\": \"rep-postman-demo-01\",\n  \"operator_notes\": \"Laporan diselesaikan oleh tim DPUPRPKP Kota Malang\",\n  \"source\": \"operator_action\"\n}"
+            },
+            "description": "Mengarsipkan citra yang telah diverifikasi oleh operator/dinas ke dalam dataset latih aktif (Active Learning pool) per kategori."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Sample Ingestion Success\", function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.data).to.have.property(\"saved_file\");",
+                  "  pm.expect(body.data.target_category).to.eql(\"Jalan Berlubang\");",
+                  "  pm.expect(body.data.is_correction).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /v1/training/ingest-sample — Ingest Operator Correction (Human-in-the-Loop)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/training/ingest-sample",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "training",
+                "ingest-sample"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image_base64\": \"{{sample_image_b64}}\",\n  \"verified_category\": \"Jalan Berlubang\",\n  \"original_prediction\": \"Trotoar\",\n  \"confidence_score\": 0.52,\n  \"report_id\": \"rep-postman-correction-02\",\n  \"operator_notes\": \"Koreksi operator: Objek sebenarnya adalah lubang aspal yang tertutup air hujan.\",\n  \"source\": \"operator_action\"\n}"
+            },
+            "description": "Mengarsipkan kasus koreksi manusia (Human-in-the-loop edge cases) untuk meningkatkan akurasi model pada skenario sulit."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Sample Correction Ingestion Success\", function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.data.is_correction).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /v1/training/dataset-stats — Dataset Distribution & Retraining Readiness",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/training/dataset-stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "v1",
+                "training",
+                "dataset-stats"
+              ]
+            },
+            "description": "Menampilkan statistik jumlah sampel data latih yang terkumpul, jumlah koreksi manusia, dan status kesiapan fine-tuning."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Dataset Stats Valid\", function () {",
+                  "  pm.expect(body.success).to.be.true;",
+                  "  pm.expect(body.data).to.have.property(\"total_samples\");",
+                  "  pm.expect(body.data).to.have.property(\"corrections_from_human_operators\");",
+                  "  pm.expect(body.data).to.have.property(\"class_distribution\");",
+                  "  pm.expect(body.data).to.have.property(\"ready_for_retraining\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/training/ingest-sample — Dual Prefix (/api/v1 Compat)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/training/ingest-sample",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "training",
+                "ingest-sample"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image_base64\": \"{{sample_image_b64}}\",\n  \"verified_category\": \"Drainase\",\n  \"original_prediction\": \"Drainase\",\n  \"confidence_score\": 0.95,\n  \"report_id\": \"rep-compat-03\"\n}"
+            },
+            "description": "Endpoint kompatibilitas /api/v1 untuk backend-laporkita / NestJS."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/training/dataset-stats — Dual Prefix (/api/v1 Compat)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/training/dataset-stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "training",
+                "dataset-stats"
+              ]
+            },
+            "description": "Endpoint kompatibilitas /api/v1 untuk backend-laporkita / NestJS."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () { pm.response.to.have.status(200); });"
                 ]
               }
             }
