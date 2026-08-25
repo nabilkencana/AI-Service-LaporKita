@@ -1451,12 +1451,26 @@
       btn.disabled = true;
       spinner.style.display = 'inline-block';
 
+      const temp = parseFloat(document.getElementById('riskTemp').value);
+      const rainfall = parseFloat(document.getElementById('riskRainfall').value);
+      const traffic = parseFloat(document.getElementById('riskTraffic').value);
+      const reports = parseInt(document.getElementById('riskReports').value, 10);
+      const category = document.getElementById('riskCategory').value;
+      const zoneId = document.getElementById('riskZone').value;
+
       const payload = {
-        temperature_c: parseFloat(document.getElementById('riskTemp').value),
-        rainfall_mm: parseFloat(document.getElementById('riskRainfall').value),
-        traffic_density: parseFloat(document.getElementById('riskTraffic').value),
-        report_density: parseInt(document.getElementById('riskReports').value, 10),
-        category: document.getElementById('riskCategory').value
+        zone_id: zoneId,
+        rainfall_mm: rainfall,
+        temperature_c: temp,
+        traffic_density: traffic,
+        report_density: reports,
+        category: category,
+        weather_context: {
+          rainfall_mm: rainfall,
+          temperature_c: temp,
+          condition: rainfall > 100 ? 'Hujan Ekstrem / Badai' : (rainfall > 60 ? 'Hujan Deras' : (rainfall > 25 ? 'Hujan Sedang' : (rainfall > 5 ? 'Hujan Ringan' : 'Cerah / Berawan'))),
+          drainage_issue_ratio: category.toLowerCase() === 'drainase' ? 0.6 : 0.2
+        }
       };
 
       const t0 = performance.now();
@@ -1471,7 +1485,7 @@
         document.getElementById('riskLatencyBadge').innerText = `${latency} ms`;
 
         const data = await res.json();
-        renderRiskResult(data);
+        renderRiskResult(data, payload);
       } catch (err) {
         alert(`Gagal memanggil API: ${err.message}`);
       } finally {
@@ -1480,7 +1494,7 @@
       }
     }
 
-    function renderRiskResult(response) {
+    function renderRiskResult(response, inputPayload) {
       document.getElementById('riskResultEmpty').style.display = 'none';
       document.getElementById('riskResultContent').style.display = 'block';
       document.getElementById('jsonRisk').innerText = JSON.stringify(response, null, 2);
@@ -1493,38 +1507,64 @@
       const d = response.data;
       const prob = d.flood_risk_probability;
       const pct = (prob * 100).toFixed(1);
+      const stressLevel = (d.predicted_stress_level || d.risk_level || 'low').toLowerCase();
 
       document.getElementById('riskProbText').innerText = `${pct}%`;
       const hero = document.getElementById('riskHero');
       const badge = document.getElementById('riskLevelBadge');
 
-      if (d.stress_level === 'high' || prob >= 0.7) {
+      if (stressLevel === 'high' || prob >= 0.7) {
         hero.className = 'result-hero manual';
-        hero.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(127, 29, 29, 0.4) 100%)';
-        hero.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+        hero.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(127, 29, 29, 0.45) 100%)';
+        hero.style.borderColor = 'rgba(239, 68, 68, 0.5)';
         badge.innerText = 'HIGH RISK (WASPADA BANJIR)';
         badge.style.color = 'var(--accent-red)';
-      } else if (d.stress_level === 'medium' || prob >= 0.4) {
+      } else if (stressLevel === 'medium' || prob >= 0.4) {
         hero.className = 'result-hero manual';
+        hero.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(180, 83, 9, 0.45) 100%)';
+        hero.style.borderColor = 'rgba(245, 158, 11, 0.5)';
         badge.innerText = 'MEDIUM RISK (SIAGA)';
         badge.style.color = 'var(--accent-amber)';
       } else {
         hero.className = 'result-hero approved';
+        hero.style.background = 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 78, 59, 0.35) 100%)';
+        hero.style.borderColor = 'rgba(16, 185, 129, 0.4)';
         badge.innerText = 'LOW RISK (AMAN)';
         badge.style.color = 'var(--accent-green)';
       }
 
-      if (d.weather_context) {
-        document.getElementById('weatherContextBox').innerHTML = `
-          Status BMKG: <strong>${d.weather_context.condition}</strong> | Curah Hujan: <strong>${d.weather_context.rainfall_mm} mm</strong> | Kelembapan: <strong>${d.weather_context.humidity_percentage}%</strong>. Wilayah berada dalam kategori risiko <strong>${d.stress_level.toUpperCase()}</strong>.
+      const inRain = inputPayload ? inputPayload.rainfall_mm : document.getElementById('riskRainfall').value;
+      const inTemp = inputPayload ? inputPayload.temperature_c : document.getElementById('riskTemp').value;
+      const inReports = inputPayload ? inputPayload.report_density : document.getElementById('riskReports').value;
+      const zoneEl = document.getElementById('riskZone');
+      const inZone = zoneEl ? zoneEl.options[zoneEl.selectedIndex].text : 'Kota Malang';
+
+      let weatherLabel = 'Cerah / Berawan';
+      if (inRain > 100) weatherLabel = 'Hujan Ekstrem / Badai';
+      else if (inRain > 60) weatherLabel = 'Hujan Deras';
+      else if (inRain > 25) weatherLabel = 'Hujan Sedang';
+      else if (inRain > 5) weatherLabel = 'Hujan Ringan';
+
+      document.getElementById('weatherContextBox').innerHTML = `
+        Zona: <strong>${inZone}</strong> | Cuaca: <strong>${weatherLabel}</strong> (${inRain} mm, ${inTemp}°C) | Akumulasi: <strong>${inReports} laporan aktif</strong>. Tingkat stres wilayah: <strong>${stressLevel.toUpperCase()}</strong>.
+      `;
+
+      document.getElementById('riskWeatherSummary').innerText = `${inTemp}°C / ${inRain}mm`;
+
+      // Render Dynamic Actions & XGBoost Explanation
+      const actionList = document.getElementById('riskActionList');
+      if (actionList) {
+        const factors = d.factors || {};
+        const rainImpact = ((factors.rainfall_impact || 0) * 100).toFixed(0);
+        const reportImpact = ((factors.report_density_impact || 0) * 100).toFixed(0);
+        const trafficImpact = ((factors.traffic_congestion_impact || 0) * 100).toFixed(0);
+
+        actionList.innerHTML = `
+          <li><span class="check-icon pass">⚡</span> <strong>Rekomendasi AI:</strong> ${d.recommendation}</li>
+          <li><span class="check-icon pass">📊</span> <strong>Faktor Kontributor Model XGBoost:</strong> Curah Hujan (${rainImpact}%), Akumulasi Laporan (${reportImpact}%), Kemacetan (${trafficImpact}%).</li>
+          <li><span class="check-icon pass">✓</span> Data langsung diintegrasikan ke Urban Emotion Map untuk koordinasi DPUPRPKP & Dishub.</li>
         `;
       }
-
-      document.getElementById('riskWeatherSummary').innerText = `${payloadTemp(d)}°C / ${d.weather_context ? d.weather_context.rainfall_mm : 0}mm`;
-    }
-
-    function payloadTemp(d) {
-      return d.weather_context ? d.weather_context.temperature_celsius : document.getElementById('riskTemp').value;
     }
 
     // Policy Simulator Presets

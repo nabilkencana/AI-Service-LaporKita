@@ -29,9 +29,22 @@ async def predict_risk(payload: PredictRiskRequest):
     """
     logger.info(f"Received predict-risk request for zone_id='{payload.zone_id}', density={payload.report_density}")
 
-    rainfall = payload.weather_context.rainfall_mm if payload.weather_context else 0.0
-    temperature = payload.weather_context.temperature_c if payload.weather_context else 27.0
-    drainage_ratio = payload.weather_context.drainage_issue_ratio if payload.weather_context else 0.2
+    rainfall = (
+        payload.rainfall_mm
+        if payload.rainfall_mm is not None
+        else (payload.weather_context.rainfall_mm if payload.weather_context else 0.0)
+    )
+    temperature = (
+        payload.temperature_c
+        if payload.temperature_c is not None
+        else (payload.weather_context.temperature_c if payload.weather_context else 27.0)
+    )
+    drainage_ratio = 0.2
+    if payload.category and payload.category.lower() == "drainase":
+        drainage_ratio = 0.6
+    elif payload.weather_context and payload.weather_context.drainage_issue_ratio is not None:
+        drainage_ratio = payload.weather_context.drainage_issue_ratio
+
     traffic = payload.traffic_density if payload.traffic_density is not None else 0.5
 
     # Execute real XGBoost inference asynchronously

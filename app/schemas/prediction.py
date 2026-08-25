@@ -13,6 +13,8 @@ class PredictRiskRequest(BaseModel):
     zone_id: Optional[str] = Field(default=None, description="UUID of urban zone (ERD.md §2.11)")
     report_density: int = Field(default=0, ge=0, le=1000, description="Aggregated report count in the zone/area")
     weather_context: Optional[WeatherContext] = Field(default_factory=WeatherContext, description="Meteorological conditions")
+    rainfall_mm: Optional[float] = Field(default=None, ge=0.0, le=500.0, description="Rainfall in millimeters (flat shorthand)")
+    temperature_c: Optional[float] = Field(default=None, ge=-50.0, le=60.0, description="Ambient temperature in Celsius (flat shorthand)")
     traffic_density: Optional[float] = Field(default=0.5, ge=0.0, le=1.0, description="Normalized traffic congestion level (0.0 to 1.0)")
     category: Optional[str] = Field(default="Drainase", description="Target facility category for risk estimation")
 
