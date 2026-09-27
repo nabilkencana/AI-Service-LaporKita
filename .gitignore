@@ -21,7 +21,7 @@ data/
 
 # Runs & caches
 runs/
-
+app/models/active_learning_runs/
 # AI & Internal Prompts
 *PROMPT*
 *prompt*
