@@ -21,7 +21,7 @@ SPLIT_DIR = DATA_DIR / "split"
 OUTPUT_MODEL_DIR = BASE_DIR / "app" / "models" / "active_learning_runs"
 
 API_URL = "https://ai.canadev.my.id/v1/training/ingest-sample"
-API_KEY = "laporkita-a0de63d362f6bb7e9b7fa125a0452196"
+API_KEY = os.environ.get("INTERNAL_API_KEY", "")
 USER_AGENT = "LaporKita-MLOps-Harvester/2.0 (contact@laporkita.malangkota.go.id)"
 
 VALID_CLASSES = [

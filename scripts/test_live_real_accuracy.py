@@ -33,7 +33,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 TEST_DIR = BASE_DIR / "dataset" / "test"
 
 VERIFY_URL = "https://ai.canadev.my.id/api/v1/verify"
-API_KEY = "laporkita-a0de63d362f6bb7e9b7fa125a0452196"
+API_KEY = os.environ.get("INTERNAL_API_KEY", "")
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 CLASSES = [
